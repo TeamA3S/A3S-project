@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>로그인 - CommerceHub</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+</head>
+<body>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary);">
+        <div style="width: 100%; max-width: 400px; padding: 2rem;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">🏪 CommerceHub</h1>
+                <p style="color: var(--text-secondary);">통합 커머스 플랫폼</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header" style="text-align: center;">로그인</div>
+                <div class="card-body">
+                    <div id="error-message" class="alert alert-danger" style="margin-bottom: 1rem; display: none;">
+                        <strong>⚠️ 로그인 실패</strong><br>
+                        <span id="error-text">이메일 또는 비밀번호가 올바르지 않습니다.</span>
+                    </div>
+
+                    <form id="login-form" onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label class="form-label">이메일</label>
+                            <input type="email" id="email" class="form-input" placeholder="admin@test.com" required autofocus>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">비밀번호</label>
+                            <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">로그인</button>
+                    </form>
+
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">계정이 없으신가요?</p>
+                        <a href="/pages/register" class="btn btn-outline" style="width: 100%;">회원가입</a>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                            <strong>테스트 계정:</strong>
+                        </p>
+                        <ul style="color: var(--text-secondary); font-size: 0.875rem; list-style: none; padding: 0;">
+                            <li>📧 admin@test.com / admin</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function handleLogin(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+
+            // 에러 메시지 숨기기
+            errorMessage.style.display = 'none';
+
+            try {
+                // returnHeaders: true 옵션으로 헤더도 받아오기
+                const result = await makeApiRequest('login', {
+                    body: {
+                        email: email,
+                        password: password
+                    },
+                    returnHeaders: true
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('login', result.data, result.headers)) {
+                    errorText.textContent = 'API 응답 형식이 올바르지 않습니다.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                if (result.data.success) {
+                    // Authorization 헤더에서 토큰 추출
+                    const authHeader = result.headers['authorization'];
+                    if (authHeader && authHeader.startsWith('Bearer ')) {
+                        const token = authHeader.substring(7);  // "Bearer " 제거
+
+                        // JWT 토큰을 쿠키에 저장
+                        saveToken(token);
+
+                        // 홈으로 이동
+                        window.location.href = '/';
+                    } else {
+                        errorText.textContent = '토큰을 받을 수 없습니다.';
+                        errorMessage.style.display = 'block';
+                    }
+                } else {
+                    // 로그인 실패
+                    errorText.textContent = result.data.message || '이메일 또는 비밀번호가 올바르지 않습니다.';
+                    errorMessage.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('로그인 오류:', error);
+                errorText.textContent = '로그인 중 오류가 발생했습니다.';
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        // 이미 로그인되어 있으면 홈으로 이동 (쿠키 체크)
+        if (getToken()) {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

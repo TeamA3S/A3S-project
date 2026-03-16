@@ -1,3 +1,5 @@
+# Gradle
+.gradle/
 HELP.md
 .gradle
 build/
@@ -5,6 +7,16 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
 ### STS ###
 .apt_generated
 .classpath
@@ -17,14 +29,7 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+# VS Code
 
 ### NetBeans ###
 /nbproject/private/
@@ -35,3 +40,27 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Application
+### ymls ###
+application.yml
+application-local.yml
+application-secret.yml
+client-api-config.yml
+application-prod.yml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

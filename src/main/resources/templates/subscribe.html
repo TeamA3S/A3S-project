@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>구독 신청 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/portone-sdk.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link active">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 2rem;">💳 플랜 구독 신청</h1>
+
+            <div class="card">
+                <div class="card-header">선택한 플랜</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">플랜 ID</label>
+                        <input type="text" id="plan-id" class="form-input" placeholder="BASIC, PRO, MAX">
+                    </div>
+                    <div id="plan-details" style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-top: 1rem;">
+                        <p style="color: var(--text-secondary);">플랜을 선택하면 상세 정보를 볼 수 있습니다</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 구독 신청 (통합) -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">🚀 구독 신청</div>
+                <div class="card-subtitle">빌링키 발급부터 구독 생성까지 자동 처리</div>
+                <div class="card-body">
+                    <div class="alert alert-info" style="margin-bottom: 1rem;">
+                        <strong>ℹ️ 현재 사용자:</strong> <span id="current-user-email">로딩 중...</span><br>
+                        <strong>고객 UID:</strong> <span id="current-customer-id">로딩 중...</span>
+                    </div>
+
+                    <button id="subscribe-btn" class="btn btn-primary" onclick="startSubscription()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                        🚀 구독 신청 시작
+                    </button>
+
+                    <!-- 진행 상황 표시 -->
+                    <div id="progress-tracker" style="display: none; margin-top: 2rem;">
+                        <h4 style="margin-bottom: 1rem; font-size: 1rem; font-weight: 600;">진행 상황</h4>
+
+                        <div id="step-1" class="progress-step">
+                            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary);">
+                                <div class="step-icon" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--bg);">1</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">빌링키 발급</div>
+                                    <div class="step-status" style="font-size: 0.875rem; color: var(--text-secondary);">PortOne SDK 호출</div>
+                                </div>
+                                <div class="step-result" style="font-size: 1.5rem;"></div>
+                            </div>
+                        </div>
+
+                        <div id="step-2" class="progress-step" style="margin-top: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary);">
+                                <div class="step-icon" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--bg);">2</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">구독 생성</div>
+                                    <div class="step-status" style="font-size: 0.875rem; color: var(--text-secondary);">POST /api/subscriptions (결제수단 등록 포함)</div>
+                                </div>
+                                <div class="step-result" style="font-size: 1.5rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 최종 결과 -->
+                    <div id="final-result" style="display: none; margin-top: 1.5rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 플랜 정보 (서버에서 로드)
+        let plans = null;
+
+        // 플랜 이모지 매핑
+        const planEmojis = {
+            'BASIC': '🥉',
+            'PRO': '🥈',
+            'MAX': '🥇'
+        };
+
+        // 현재 사용자 정보 (서버에서 로드)
+        let currentUser = null;
+
+        // 페이지 로드 시 사용자 정보 가져오기
+        async function loadCurrentUser() {
+            try {
+                currentUser = await makeApiRequest('get-current-user', {
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('get-current-user', currentUser)) {
+                    showNotification('사용자 정보를 가져올 수 없습니다', 'error');
+                    setTimeout(() => window.location.href = '/pages/login', 2000);
+                    return;
+                }
+
+                document.getElementById('current-user-email').textContent = currentUser.email;
+                document.getElementById('current-customer-id').textContent = currentUser.customerUid;
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                showNotification('사용자 정보 로드 실패', 'error');
+            }
+        }
+
+        // 플랜 목록 로드
+        async function loadPlans() {
+            try {
+                const plansArray = await makeApiRequest('list-plans', {
+                });
+
+                if (!validateApiResponse('list-plans', plansArray)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+
+                // 배열을 객체로 변환 (planId를 그대로 키로 사용)
+                plans = {};
+                plansArray.forEach(plan => {
+                    // planId를 그대로 사용 (어떤 형식이든 상관없음: PLAN-PRO, PRO, 1, etc.)
+                    plans[plan.planId] = {
+                        planId: plan.planId,
+                        name: plan.name,
+                        price: plan.amount,
+                        billingCycle: plan.billingCycle,
+                        // 이모지 매핑: name 기반 또는 기본값
+                        emoji: planEmojis[plan.name.toUpperCase()] || planEmojis[plan.planId] || '📦'
+                    };
+                });
+
+                console.log('Loaded plans:', plans);
+            } catch (error) {
+                console.error('Failed to load plans:', error);
+
+                // API 미구현 메시지 표시
+                const mainContent = document.querySelector('.container');
+                mainContent.innerHTML = `
+                    <div class="alert alert-warning" style="margin-top: 2rem;">
+                        <h3>⚠️ API 미구현</h3>
+                        <p><strong>GET /api/plans</strong> 엔드포인트를 구현해주세요.</p>
+                        <p>구독 플랜 목록을 조회하는 API가 필요합니다.</p>
+                        <p style="margin-top: 1rem;">
+                            <a href="/pages/plans" class="btn btn-primary">플랜 목록으로 돌아가기</a>
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCurrentUser();
+            await loadPlans();
+        });
+
+        // URL에서 palnId 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const planIdParam = urlParams.get('planId');
+        if (planIdParam) {
+            document.getElementById('plan-id').value = planIdParam;
+            updatePlanDetails(planIdParam);
+        }
+
+        document.getElementById('plan-id').addEventListener('change', (e) => {
+            updatePlanDetails(e.target.value);
+        });
+
+        // 플랜 찾기 헬퍼 (유연한 매칭: 정확한 일치 → name 일치 → 부분 일치)
+        function findPlan(searchKey) {
+            if (!plans || !searchKey) return null;
+
+            // 1. 정확한 planId 일치
+            if (plans[searchKey]) return plans[searchKey];
+
+            // 2. 대소문자 무시 planId 일치
+            const lowerSearch = searchKey.toLowerCase();
+            for (const [planId, plan] of Object.entries(plans)) {
+                if (planId.toLowerCase() === lowerSearch) return plan;
+            }
+
+            // 3. name 일치 (예: "PRO" → name이 "Pro"인 플랜)
+            for (const plan of Object.values(plans)) {
+                if (plan.name.toUpperCase() === searchKey.toUpperCase()) return plan;
+            }
+
+            // 4. planId에 검색키가 포함된 경우 (예: "PRO" → "PLAN-PRO")
+            for (const [planId, plan] of Object.entries(plans)) {
+                if (planId.toUpperCase().includes(searchKey.toUpperCase())) return plan;
+            }
+
+            return null;
+        }
+
+        function updatePlanDetails(searchKey) {
+            const plan = findPlan(searchKey);
+            const detailsDiv = document.getElementById('plan-details');
+
+            if (plan) {
+                detailsDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="font-size: 3rem;">${plan.emoji}</div>
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">${plan.name}</div>
+                            <div style="font-size: 1.25rem; color: var(--primary);">₩${plan.price.toLocaleString()}/month</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ========================================
+        // 통합 구독 신청 플로우
+        // ========================================
+        async function startSubscription() {
+            const planIdInput = document.getElementById('plan-id').value.trim();
+
+            // 유연한 플랜 찾기 (어떤 planId 형식이든 매칭)
+            const plan = findPlan(planIdInput);
+
+            if (!plan) {
+                showNotification('⚠️ Please select a valid plan', 'warning');
+                return;
+            }
+
+            if (!currentUser) {
+                showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
+                return;
+            }
+
+            // UI 초기화
+            document.getElementById('subscribe-btn').disabled = true;
+            document.getElementById('progress-tracker').style.display = 'block';
+            document.getElementById('final-result').style.display = 'none';
+
+            resetProgressStep(1);
+            resetProgressStep(2);
+
+            let billingKey = null;
+
+            try {
+                // ============================================
+                // Step 1: 빌링키 발급 (PortOne SDK)
+                // ============================================
+                updateStepStatus(1, 'progress', '진행중... PortOne 창이 열립니다');
+
+                const billingKeyData = {
+                    issueId: `issue_${Date.now()}`,
+                    issueName: `${plan.name} Plan Subscription`,
+                    billingKeyMethod: 'CARD',
+                    customer: {
+                        customerId: currentUser.customerUid,
+                        fullName: currentUser.name,
+                        phoneNumber: currentUser.phone || '01012345678',  // KG 이니시스 필수
+                        email: currentUser.email
+                    }
+                };
+
+                const billingKeyResult = await issuePortOneBillingKey(billingKeyData);
+
+                if (!billingKeyResult.billingKey) {
+                    throw new Error('빌링키 발급 실패');
+                }
+
+                billingKey = billingKeyResult.billingKey;
+                updateStepStatus(1, 'success', `완료! (${billingKey.substring(0, 20)}...)`);
+                console.log('✓ Step 1: 빌링키 발급 완료:', billingKey);
+
+                // ============================================
+                // Step 2: 구독 생성 (결제수단 등록 포함)
+                // ============================================
+                updateStepStatus(2, 'progress', '진행중... POST /api/subscriptions');
+
+                let subscriptionResult;
+                try {
+                    subscriptionResult = await makeApiRequest('create-subscription', {
+                        body: {
+                            customerUid: currentUser.customerUid,
+                            planId: plan.planId,  // API에서 받은 planId 그대로 전송
+                            billingKey: billingKey,
+                            amount: plan.price
+                        }
+                    });
+                } catch (apiError) {
+                    // API 미구현 상태를 step에 표시
+                    if (apiError.message.includes('404') || apiError.message.includes('Not Found')) {
+                        updateStepStatus(2, 'error', '❌ API 미구현 (POST /api/subscriptions 엔드포인트를 구현해주세요)');
+                    } else {
+                        updateStepStatus(2, 'error', `❌ 실패: ${apiError.message}`);
+                    }
+                    throw apiError;
+                }
+
+                // 응답 검증
+                if (!subscriptionResult.subscriptionId) {
+                    updateStepStatus(2, 'error', '❌ 구독 ID가 반환되지 않음');
+                    throw new Error('구독 ID가 반환되지 않았습니다');
+                }
+
+                updateStepStatus(2, 'success', '완료! 구독 활성화됨 (결제수단도 함께 등록됨)');
+                console.log('✓ Step 2: 구독 생성 완료 (결제수단 등록 포함):', subscriptionResult.subscriptionId);
+
+                // ============================================
+                // 최종 성공
+                // ============================================
+                showFinalResult('success', subscriptionResult.subscriptionId);
+
+            } catch (error) {
+                console.error('구독 신청 실패:', error);
+
+                // API 미구현 여부 판단
+                let errorMessage = error.message;
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    errorMessage = '⚠️ 구독 생성 API가 아직 구현되지 않았습니다. 백엔드에서 POST /api/subscriptions 엔드포인트를 구현해주세요.';
+                } else if (error.message.includes('500') || error.message.includes('501')) {
+                    errorMessage = '⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.';
+                }
+
+                showFinalResult('error', null, errorMessage);
+            } finally {
+                document.getElementById('subscribe-btn').disabled = false;
+            }
+        }
+
+        // 진행 상황 업데이트
+        function updateStepStatus(stepNumber, status, message) {
+            const step = document.getElementById(`step-${stepNumber}`);
+            const statusDiv = step.querySelector('.step-status');
+            const resultDiv = step.querySelector('.step-result');
+            const icon = step.querySelector('.step-icon');
+
+            statusDiv.textContent = message;
+
+            if (status === 'progress') {
+                icon.style.background = 'var(--primary)';
+                icon.style.color = 'white';
+                resultDiv.textContent = '⏳';
+            } else if (status === 'success') {
+                icon.style.background = 'var(--success)';
+                icon.style.color = 'white';
+                resultDiv.textContent = '✅';
+            } else if (status === 'error') {
+                icon.style.background = 'var(--danger)';
+                icon.style.color = 'white';
+                resultDiv.textContent = '❌';
+            }
+        }
+
+        // 진행 상황 초기화
+        function resetProgressStep(stepNumber) {
+            const step = document.getElementById(`step-${stepNumber}`);
+            const statusDiv = step.querySelector('.step-status');
+            const resultDiv = step.querySelector('.step-result');
+            const icon = step.querySelector('.step-icon');
+
+            icon.style.background = 'var(--bg)';
+            icon.style.color = 'var(--text)';
+            resultDiv.textContent = '';
+
+            if (stepNumber === 1) statusDiv.textContent = 'PortOne SDK 호출';
+            if (stepNumber === 2) statusDiv.textContent = 'POST /api/subscriptions (결제수단 등록 포함)';
+        }
+
+        // 최종 결과 표시
+        function showFinalResult(status, subscriptionId, errorMessage) {
+            const resultDiv = document.getElementById('final-result');
+            resultDiv.style.display = 'block';
+
+            if (status === 'success') {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        <h3 style="margin: 0 0 0.5rem 0;">🎉 구독 신청 완료!</h3>
+                        <p style="margin: 0;">구독 ID: <code>${subscriptionId}</code></p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.875rem;">잠시 후 구독 관리 페이지로 이동합니다...</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    window.location.href = `/pages/subscriptions?subscriptionId=${subscriptionId}`;
+                }, 2000);
+            } else {
+                // API 미구현 여부에 따라 도움말 제공
+                const isApiNotImplemented = errorMessage.includes('구현되지 않았습니다') || errorMessage.includes('API 미구현');
+
+                let helpText = '';
+                if (isApiNotImplemented) {
+                    helpText = `
+                        <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); border-left: 4px solid var(--warning);">
+                            <strong>💡 다음 단계:</strong><br>
+                            <code style="background: var(--bg); padding: 0.25rem 0.5rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem;">POST /api/subscriptions</code> 엔드포인트를 구현하세요.<br>
+                            <small style="color: var(--text-secondary); margin-top: 0.5rem; display: block;">
+                            • 요청: customerUid, planId, billingKey, amount<br>
+                            • 응답: subscriptionId 반환<br>
+                            • 트랜잭션 처리: 빌링키 저장 + 구독 생성
+                            </small>
+                        </div>
+                    `;
+                }
+
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h3 style="margin: 0 0 0.5rem 0;">❌ 구독 신청 실패</h3>
+                        <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">${errorMessage || '알 수 없는 오류가 발생했습니다.'}</p>
+                        ${helpText}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

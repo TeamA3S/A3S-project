@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>상점 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/portone-sdk.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link active">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 2rem;">🛒 Product Shop</h1>
+
+            <!-- API 구현 상태 안내 -->
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
+                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
+                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
+                </p>
+                <ul id="api-list-shop" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
+                    <!-- API 목록이 동적으로 생성됩니다 -->
+                </ul>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
+                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
+                </p>
+            </div>
+
+            <div class="card-grid" id="product-list">
+                <!-- Products will be rendered here -->
+            </div>
+
+            <div class="cart-summary" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">🛍️ Cart Summary</h3>
+                <div id="cart-items"></div>
+                <div class="cart-total">
+                    <span>총 금액:</span>
+                    <span id="cart-total">₩0</span>
+                </div>
+
+                <button class="btn btn-primary" onclick="createOrder()" style="width: 100%; margin-top: 1rem;">
+                    📦 주문 생성
+                </button>
+            </div>
+        </div>
+
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 참고용: API 응답 예시 구조
+        // [
+        //     { id: 'PROD001', name: '프리미엄 무선 이어폰', price: 89000, stock: 50 },
+        //     { id: 'PROD002', name: '스마트 워치', price: 299000, stock: 30 },
+        //     ...
+        // ]
+
+        let products = [];
+        const cart = {};
+
+        // 현재 사용자 정보 (서버에서 로드)
+        let currentUser = null;
+
+        // 페이지 로드 시 사용자 정보 가져오기
+        async function loadCurrentUser() {
+            try {
+                currentUser = await makeApiRequest('get-current-user', {
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('get-current-user', currentUser)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                currentUser = null;
+            }
+        }
+
+        // API에서 상품 목록 로드 (구현 필수)
+        async function loadProductsFromApi() {
+            try {
+                const result = await makeApiRequest('list-products', {
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('list-products', result)) {
+                    // 검증 실패 시 에러 메시지는 validateApiResponse에서 표시됨
+                    return false;
+                }
+
+                if (result && Array.isArray(result)) {
+                    products = result;
+                    showNotification('API에서 상품 로드 성공', 'success');
+                    return true;
+                } else {
+                    showNotification('상품 목록이 배열 형식이 아닙니다', 'error');
+                    return false;
+                }
+            } catch (error) {
+                console.error('API 미구현:', error);
+                showNotification('상품 목록 조회 API를 먼저 구현해주세요', 'error');
+                return false;
+            }
+        }
+
+        // Render products
+        function renderProducts() {
+            const productList = document.getElementById('product-list');
+
+            if (products.length === 0) {
+                // yml 설정에서 엔드포인트 가져오기
+                const endpoint = window.APP_RUNTIME?.config?.demoApi?.endpoints['list-products'] || '/api/products';
+
+                productList.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                        <h3 style="color: var(--text-secondary); margin-bottom: 1rem;">상품 데이터 없음</h3>
+                        <p style="color: var(--text-secondary);">
+                            <strong>GET ${endpoint}</strong> API를 구현하면 상품이 표시됩니다.
+                        </p>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                            응답 형식: [{ id, name, price, stock }]
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            productList.innerHTML = products.map(product => {
+                const stockStatus = product.stock > 0
+                    ? `<span style="color: var(--success);">재고: ${product.stock}개</span>`
+                    : `<span style="color: var(--error);">품절</span>`;
+
+                return `
+                    <div class="product-card">
+                        <div class="card-header">${product.name}</div>
+                        <div class="price">₩${product.price.toLocaleString()}</div>
+                        <div style="margin: 0.5rem 0; font-size: 0.9rem;">${stockStatus}</div>
+                        <div class="quantity-control">
+                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', -1)"
+                                ${product.stock === 0 ? 'disabled' : ''}>-</button>
+                            <input type="number" class="quantity-input" id="qty-${product.id}"
+                                value="0" min="0" max="${product.stock}" readonly>
+                            <button class="quantity-btn" onclick="updateQuantity('${product.id}', 1)"
+                                ${product.stock === 0 ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateQuantity(productId, delta) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const input = document.getElementById(`qty-${productId}`);
+            let qty = parseInt(input.value) + delta;
+
+            // 재고 수량 체크
+            if (qty < 0) qty = 0;
+            if (qty > product.stock) {
+                showNotification(`⚠️ 재고가 ${product.stock}개만 남았습니다`, 'warning');
+                qty = product.stock;
+            }
+
+            input.value = qty;
+            cart[productId] = qty;
+            updateCartSummary();
+        }
+
+        function updateCartSummary() {
+            const cartItemsDiv = document.getElementById('cart-items');
+            const cartTotalSpan = document.getElementById('cart-total');
+            const finalAmountSpan = document.getElementById('final-amount');
+
+            let total = 0;
+            let html = '';
+
+            Object.keys(cart).forEach(productId => {
+                const qty = cart[productId];
+                if (qty > 0) {
+                    const product = products.find(p => p.id === productId);
+                    const subtotal = product.price * qty;
+                    total += subtotal;
+                    html += `
+                        <div class="cart-item">
+                            <span>${product.name} x${qty}</span>
+                            <span>₩${subtotal.toLocaleString()}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            cartItemsDiv.innerHTML = html || '<p style="color: var(--text-secondary);">Cart is empty</p>';
+            cartTotalSpan.textContent = `₩${total.toLocaleString()}`;
+
+        }
+
+        // API 목록 동적 생성
+        async function populateApiList() {
+            const apiListElement = document.getElementById('api-list-shop');
+            if (!apiListElement) return;
+
+            try {
+                // config 로드 대기
+                const config = await getConfig();
+                const endpoints = config?.api?.endpoints;
+
+                if (!endpoints) {
+                    apiListElement.innerHTML = '';
+                    return;
+                }
+
+                // shop.html에 필요한 API들
+                const requiredApis = ['list-products', 'create-order'];
+                const apiItems = [];
+
+                requiredApis.forEach(apiKey => {
+                    const apiConfig = endpoints[apiKey];
+                    if (apiConfig && apiConfig.url) {
+                        const method = apiConfig.method || 'GET';
+                        const description = apiConfig.description || '';
+                        apiItems.push(`<li><code>${method} ${apiConfig.url}</code> - ${description}</li>`);
+                    }
+                });
+
+                // API가 정의되어 있으면 표시, 없으면 빈 문자열
+                apiListElement.innerHTML = apiItems.join('');
+            } catch (error) {
+                console.error('API 목록 로드 실패:', error);
+                apiListElement.innerHTML = '';
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            // API 목록 동적 생성 (비동기)
+            populateApiList();
+        });
+
+        async function createOrder() {
+            // 서버로 보낼 아이템 (productId와 quantity만)
+            const items = [];
+
+            Object.keys(cart).forEach(productId => {
+                const qty = cart[productId];
+                if (qty > 0) {
+                    items.push({
+                        productId: productId,
+                        quantity: qty
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                showNotification('⚠️ Cart is empty', 'warning');
+                return;
+            }
+
+            if (!currentUser) {
+                showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
+                return;
+            }
+
+            // 서버로 전송 (productId, quantity만)
+            // 가격 계산과 재고 확인은 서버에서 처리
+            const orderData = {
+                items: items
+            };
+
+            try {
+                const result = await makeApiRequest('create-order', {
+                    body: orderData
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('create-order', result)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+
+                if (result.orderId) {
+                    showNotification('주문 생성 완료!', 'success');
+                    setTimeout(() => {
+                        window.location.href = `/pages/orders?orderId=${result.orderId}`;
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Failed to create order:', error);
+            }
+        }
+
+        // Initialize
+        async function initShop() {
+            await loadCurrentUser();
+            await loadProductsFromApi();
+            renderProducts();
+            updateCartSummary();
+        }
+
+        initShop();
+    </script>
+</body>
+</html>
