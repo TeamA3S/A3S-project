@@ -48,3 +48,7 @@ logs/
 *.bak
 *.swp
 *~
+
+# yml
+application.yml
+client-api-config.yml
