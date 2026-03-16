@@ -8,7 +8,7 @@ import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
-public class PageResponseDto<T> implements ApiResponseDto<T>  {
+public class PageResponseDto<T> implements ApiResponseDto<T> {
     private final HttpStatus status;
     private final int page;
     private final int size;

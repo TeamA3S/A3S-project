@@ -1,4 +1,4 @@
-package com.bootcamp.paymentdemo.controller;
+package com.example.a3sproject.global.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

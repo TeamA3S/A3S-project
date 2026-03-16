@@ -1,6 +1,6 @@
 spring:
   application:
-    name: payment-demo
+    name: a3sproject
 
   # 클라이언트 API 계약 설정 파일 import
   config:
