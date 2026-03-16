@@ -1,9 +1,9 @@
-package com.bootcamp.paymentdemo.controller;
+package com.example.a3sproject.global.controller;
 
-import com.bootcamp.paymentdemo.config.AppProperties;
-import com.bootcamp.paymentdemo.config.ClientApiProperties;
-import com.bootcamp.paymentdemo.config.PortOneProperties;
-import com.bootcamp.paymentdemo.dto.PublicConfigResponse;
+import com.example.a3sproject.config.AppProperties;
+import com.example.a3sproject.config.ClientApiProperties;
+import com.example.a3sproject.config.PortOneProperties;
+import com.example.a3sproject.global.dto.PublicConfigResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

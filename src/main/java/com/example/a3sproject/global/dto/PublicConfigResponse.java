@@ -1,6 +1,6 @@
-package com.bootcamp.paymentdemo.dto;
+package com.example.a3sproject.global.dto;
 
-import com.bootcamp.paymentdemo.config.ClientApiProperties;
+import com.example.a3sproject.config.ClientApiProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
