@@ -30,11 +30,7 @@ public class Membership extends BaseEntity {
     @Column(nullable = false)
     private MembershipGrade grade;
 
-    // 포인트 잔액 (스냅샷)
-    @Column(nullable = false)
-    private int pointBalance;
-
-    // 총 결제 금액 (등급 산정 기준)
+    // 총 결제 금액
     @Column(nullable = false)
     private int totalPaymentAmount;
 
@@ -43,15 +39,7 @@ public class Membership extends BaseEntity {
         Membership membership = new Membership();
         membership.user = user;
         membership.grade = MembershipGrade.NORMAL;
-        membership.pointBalance = 0;
-        membership.totalPaymentAmount = 0;
         return membership;
-    }
-
-    // 총 결제 금액 업데이트 및 등급 갱신
-    public void updateTotalPaymentAmount(int amount) {
-        this.totalPaymentAmount += amount;
-        this.grade = updateGrade(this.totalPaymentAmount);
     }
 
     // 등급 갱신 로직
@@ -61,11 +49,18 @@ public class Membership extends BaseEntity {
         return MembershipGrade.NORMAL;
     }
 
+    // 등급별 적립률
     public double getEarnRate() {
         return switch (this.grade) {
             case VVIP -> 0.10;
             case VIP -> 0.05;
             default -> 0.01;
         };
+    }
+
+    // 총 결제 금액 업데이트 및 등급 갱신
+    public void updateTotalPaymentAmount(int amount) {
+        this.totalPaymentAmount += amount;
+        this.grade = updateGrade(this.totalPaymentAmount);
     }
 }

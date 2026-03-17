@@ -33,7 +33,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String phoneNumber;
 
-    // 포인트 잔액
+    // 포인트 잔액(스냅샷)
     @Column(nullable = false)
     private Integer pointBalance;
 
