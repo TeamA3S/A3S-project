@@ -5,7 +5,8 @@ import com.example.a3sproject.domain.product.dto.GetOneProductResponseDto;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
-import com.example.a3sproject.global.exception.domain.product.ProductNotFoundException;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.ProductException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +34,7 @@ public class ProductService {
     // 상품 단건 조회
     public GetOneProductResponseDto getOneProduct(Long productId) {
         Product product = productRepository.findById(productId).orElseThrow(
-                ProductNotFoundException::new
+                () -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND)
         );
         return new GetOneProductResponseDto(product);
     }

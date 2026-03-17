@@ -9,9 +9,10 @@ import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.domain.user.entity.User;
-import com.example.a3sproject.global.exception.domain.order.EmptyOrderListException;
-import com.example.a3sproject.global.exception.domain.product.OutOfStockException;
-import com.example.a3sproject.global.exception.domain.product.UnavailableProductException;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.OrderException;
+import com.example.a3sproject.global.exception.domain.ProductException;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,15 +35,12 @@ public class OrderService {
     @Transactional
     public CreateOrderResponseDto createOrder(User user, CreateOrderRequestDto requestDto) {
         if (requestDto.getOrderItems() == null || requestDto.getOrderItems().isEmpty()) {
-            throw new EmptyOrderListException();
+            throw new OrderException(ErrorCode.INVALID_INPUT);
         }
 
         // 같은 상품이 여러 번 들어오면 수량 합치기
         Map<Long, Integer> quantityByProductId = new LinkedHashMap<>();
         for (CreateOrderRequestDto.OrderItemRequestDto item : requestDto.getOrderItems()) {
-            if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
-            }
             // 중복 상품 수량 합치기
             quantityByProductId.merge(item.getProductId(), item.getQuantity(), Integer::sum);
         }
@@ -52,7 +50,7 @@ public class OrderService {
 
         // 존재하는 상품들인지 확인
         if (products.size() != quantityByProductId.size()) {
-            throw new EmptyOrderListException();
+            throw new OrderException(ErrorCode.ORDERITEM_NOT_FOUND);
         }
 
         Map<Long, Product> productMap = products.stream()
@@ -84,11 +82,11 @@ public class OrderService {
     // 상품 상태, 재고 사전 확인 (주문할 수 있는 상품인지)
     private void validateProductForOrder(Product product, int quantity) {
          if (product.getProductStatus() != ProductStatus.ON_SALE) {
-             throw new UnavailableProductException();
+             throw new OrderException(ErrorCode.ORDERITEM_UNAVAILABLE);
          }
         // 재고 사전 확인
         if (product.getStock() < quantity) {
-            throw new OutOfStockException();
+            throw new ProductException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
     }
 

@@ -4,7 +4,8 @@ package com.example.a3sproject.domain.product.entity;
 import com.example.a3sproject.domain.product.enums.ProductCategory;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.global.entity.BaseEntity;
-import com.example.a3sproject.global.exception.domain.product.OutOfStockException;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -59,7 +60,7 @@ public class Product extends BaseEntity {
     // 재고 차감
     public void decreaseStock(int quantity){
         if (this.stock - quantity < 0) {
-            throw new OutOfStockException();
+            throw new ProductException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
         this.stock = this.stock - quantity;
     }

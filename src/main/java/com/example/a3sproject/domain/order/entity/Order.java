@@ -3,6 +3,8 @@ package com.example.a3sproject.domain.order.entity;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.entity.BaseEntity;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.OrderException;
 import com.example.a3sproject.global.exception.domain.order.InvalidQuantityException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -64,7 +66,7 @@ public class Order extends BaseEntity {
     // 주문생성 정적 메서드
     public static Order createOrder(User user, List<OrderItem> orderItems, String orderNumber) {
         if (orderItems == null || orderItems.isEmpty()) {
-            throw new InvalidQuantityException();
+            throw new OrderException(ErrorCode.INVALID_INPUT);
         }
 
         Order order = new Order(orderNumber, user);
