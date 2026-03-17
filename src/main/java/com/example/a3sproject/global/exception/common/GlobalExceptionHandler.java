@@ -14,80 +14,81 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // 도메인 커스텀 예외 (UserException, PaymentException 등 ServiceException 하위 전부 처리)
+    // 도메인 커스텀 예외
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleServiceException(ServiceException ex) {
         return ResponseEntity
                 .status(ex.getStatus())
                 .body(ApiResponseDto.error(
-                        ex.getStatus().toString(),
-                        ex.getCode() + ": " + ex.getMessage())
-                );
+                        ex.getCode(),       // "USER_NOT_FOUND"
+                        ex.getMessage()     // "유저를 찾을 수 없습니다."
+                ));
     }
 
-    // Spring Security - 인가 실패 (403)
+    // 403
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorCode errorCode = ErrorCode.USER_FORBIDDEN;
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(ApiResponseDto.error(
-                        HttpStatus.FORBIDDEN.toString(),
-                        ErrorCode.USER_FORBIDDEN.name() + ": " + ErrorCode.USER_FORBIDDEN.getMessage())
-                );
+                        errorCode.name(),       // "USER_FORBIDDEN"
+                        errorCode.getMessage()  // "접근 권한이 없습니다."
+                ));
     }
 
-    // Spring Security - 인증 실패 (401)
+    // 401 - 인증 실패
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleAuthenticationException(AuthenticationException ex) {
+        ErrorCode errorCode = ErrorCode.USER_UNAUTHORIZED;
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponseDto.error(
-                        HttpStatus.UNAUTHORIZED.toString(),
-                        ErrorCode.USER_UNAUTHORIZED.name() + ": " + ErrorCode.USER_UNAUTHORIZED.getMessage())
-                );
+                        errorCode.name(),
+                        errorCode.getMessage()
+                ));
     }
 
-    // JWT - 토큰 만료 (401)
+    // 401 - 토큰 만료
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleExpiredJwtException(ExpiredJwtException ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponseDto.error(
-                        HttpStatus.UNAUTHORIZED.toString(),
-                        "TOKEN_EXPIRED: 토큰이 만료되었습니다.")
-                );
+                        "TOKEN_EXPIRED",
+                        "토큰이 만료되었습니다."
+                ));
     }
 
-    // JWT - 잘못된 형식 (401)
+    // 401 - 잘못된 토큰 형식
     @ExceptionHandler(MalformedJwtException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleMalformedJwtException(MalformedJwtException ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponseDto.error(
-                        HttpStatus.UNAUTHORIZED.toString(),
-                        "TOKEN_MALFORMED: 유효하지 않은 토큰입니다.")
-                );
+                        "TOKEN_MALFORMED",
+                        "유효하지 않은 토큰입니다."
+                ));
     }
 
-    // JWT - 서명 오류 (401)
+    // 401 - 서명 오류
     @ExceptionHandler(SignatureException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleSignatureException(SignatureException ex) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(ApiResponseDto.error(
-                        HttpStatus.UNAUTHORIZED.toString(),
-                        "TOKEN_SIGNATURE_INVALID: 토큰 서명이 올바르지 않습니다.")
-                );
+                        "TOKEN_SIGNATURE_INVALID",
+                        "토큰 서명이 올바르지 않습니다."
+                ));
     }
 
-     // @Valid 유효성 검증 실패 (400) 필드별 에러 메시지를 Map으로 반환
+    // 400 - @Valid 유효성 검증 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseDto<Map<String, String>>> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex) {
@@ -101,31 +102,31 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponseDto.errorWithMap(
                         errors,
-                        HttpStatus.BAD_REQUEST.toString(),
-                        ErrorCode.INVALID_INPUT.name() + ": " + ErrorCode.INVALID_INPUT.getMessage())
-                );
+                        ErrorCode.INVALID_INPUT.name(),      // "INVALID_INPUT"
+                        ErrorCode.INVALID_INPUT.getMessage()
+                ));
     }
 
-    // 필수 요청 파라미터 누락 (400)
+    // 400 - 필수 파라미터 누락
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleMissingServletRequestParameterException(
             MissingServletRequestParameterException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponseDto.error(
-                        HttpStatus.BAD_REQUEST.toString(),
-                        ErrorCode.INVALID_INPUT.name() + ": " + ex.getMessage())
-                );
+                        ErrorCode.INVALID_INPUT.name(),
+                        ex.getMessage()
+                ));
     }
 
-    // 그 외 처리되지 않은 모든 예외 (500)
+    // 500 - 그 외 모든 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDto<Void>> handleException(Exception ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseDto.error(
-                        HttpStatus.INTERNAL_SERVER_ERROR.toString(),
-                        ErrorCode.INTERNAL_SERVER_ERROR.name() + ": " + ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
-                );
+                        ErrorCode.INTERNAL_SERVER_ERROR.name(),
+                        ErrorCode.INTERNAL_SERVER_ERROR.getMessage()
+                ));
     }
 }
