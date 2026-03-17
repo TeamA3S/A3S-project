@@ -33,11 +33,26 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String phoneNumber;
 
+    // 포인트 잔액(스냅샷)
+    @Column(nullable = false)
+    private Integer pointBalance;
+
+    // 총 결제 금액
+    @Column(nullable = false)
+    private Integer totalPaymentAmount;
+
     // 회원가입용 생성자
-    public User(String name, String email, String password, String phoneNumber) {
+    public User(String name, String email, String password, String phoneNumber, Integer pointBalance ) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.phoneNumber = phoneNumber;
+        this.pointBalance = 0;
+        this.totalPaymentAmount = 0;
+    }
+
+    // 총 결제 금액 업데이트
+    public void updateTotalPaymentAmount(int amount) {
+        this.totalPaymentAmount += amount;
     }
 }
