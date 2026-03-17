@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.product.entity;
+package com.example.a3sproject.domain.product.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

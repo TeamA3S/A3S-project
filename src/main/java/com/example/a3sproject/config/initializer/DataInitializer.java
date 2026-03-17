@@ -1,8 +1,8 @@
 package com.example.a3sproject.config.initializer;
 
 import com.example.a3sproject.domain.product.entity.Product;
-import com.example.a3sproject.domain.product.entity.ProductCategory;
-import com.example.a3sproject.domain.product.entity.ProductStatus;
+import com.example.a3sproject.domain.product.enums.ProductCategory;
+import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
