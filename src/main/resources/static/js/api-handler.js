@@ -94,6 +94,20 @@ async function makeApiRequest(endpointKey, options = {}) {
             };
         }
 
+        // 백엔드에서 온 데이터가 { success: true, data: [...] } 같은 래퍼 객체라면
+        // 프론트엔드 로직에 넘기기 전에 알맹이(data.data)만 쏙 빼서 넘겨줌.
+        if (data && data.data !== undefined) {
+            const unwrapped = data.data;
+
+            // 객체 응답이면 래퍼의 success 상태를 병합
+            if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
+                if (unwrapped.success === undefined && data.success !== undefined) {
+                    unwrapped.success = data.success;
+                }
+            }
+            return unwrapped;
+        }
+
         return data;
     } catch (error) {
         displayError({
