@@ -1,5 +1,8 @@
 package com.example.a3sproject.global.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +46,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = getJwtFromRequest(request);
 
             // 2. 토큰 유효성 검증
-            if (token != null && jwtTokenProvider.validateToken(token)) {
+            if (token != null) {
+
+                jwtTokenProvider.validateToken(token);
+
                 // 3. 토큰에서 사용자 정보 추출
                 String email = jwtTokenProvider.getEmail(token);
 
@@ -60,9 +66,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 5. SecurityContext에 인증 정보 설정
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } catch (Exception e) {
-            logger.error("JWT 인증 실패", e);
-            // TODO: 구현 - 적절한 에러 응답
+        } catch (ExpiredJwtException e) {
+            sendErrorResponse(response, "TOKEN_EXPIRED", "토큰이 만료되었습니다.");
+            return;
+        } catch (MalformedJwtException e) {
+            sendErrorResponse(response, "TOKEN_MALFORMED", "유효하지 않은 토큰입니다.");
+            return;
+        } catch (SignatureException e) {
+            sendErrorResponse(response, "TOKEN_SIGNATURE_INVALID", "토큰 서명이 올바르지 않습니다.");
+            return;
         }
 
         filterChain.doFilter(request, response);
@@ -80,5 +92,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         return null;
+    }
+
+    /**
+     * 필터에서 직접 JSON 에러 응답 작성
+     * GlobalExceptionHandler는 DispatcherServlet 이후에만 동작하므로
+     * 필터 레벨에서는 직접 response로 반환.
+     */
+    private void sendErrorResponse(
+            HttpServletResponse response,
+            String code,
+            String message) throws IOException {
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 401
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(
+                String.format("{\"code\":\"%s\",\"message\":\"%s\",\"data\":null}", code, message)
+        );
     }
 }

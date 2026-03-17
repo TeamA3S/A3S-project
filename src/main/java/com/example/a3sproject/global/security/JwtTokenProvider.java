@@ -8,33 +8,57 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
  * JWT 토큰 생성 및 검증 유틸리티
- * 개선할 부분: Refresh Token, Token Expiry 관리, Claims 커스터마이징 등
  */
 @Component
 public class JwtTokenProvider {
 
     private final SecretKey secretKey;
     private final long tokenValidityInMilliseconds;
+    private final long refreshTokenValidityInMilliseconds;
 
     public JwtTokenProvider(
-        @Value("${jwt.secret:commercehub-secret-key-for-demo-please-change-this-in-production-environment}") String secret,
-        @Value("${jwt.token-validity-in-seconds:86400}") long tokenValidityInSeconds
+        @Value("${jwt.secret}") String secret,
+        @Value("${jwt.token-validity-in-seconds}") long tokenValidityInSeconds,
+        @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.tokenValidityInMilliseconds = tokenValidityInSeconds * 1000;
+        this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
+    }
+
+    /**
+     * Refresh Token 생성
+     * Claims 없이 subject(email)만 포함 — 최소한의 정보만 담습니다.
+     */
+    public String createRefreshToken(String email) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
+
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(now)
+                .expiration(validity)
+                .signWith(secretKey)
+                .compact();
+    }
+
+    /**
+     * Refresh Token 만료 시각 반환 — DB 저장용
+     */
+    public LocalDateTime getRefreshTokenExpiresAt() {
+        return LocalDateTime.now()
+                .plusSeconds(refreshTokenValidityInMilliseconds / 1000);
     }
 
     /**
      * JWT 토큰 생성
      *
-     * TODO: 개선 사항
-     * - 사용자 역할(Role) 정보 추가
-     * - 추가 Claims 정보 (이름, 이메일 등)
-     * - Refresh Token 발급 로직
+     * - 사용자 멤버십(membership) 정보 추가
      */
     public String createToken(String email) {
         Date now = new Date();
@@ -42,46 +66,48 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
             .subject(email)
+            .claim("membership", membership)
             .issuedAt(now)
             .expiration(validity)
             .signWith(secretKey)
             .compact();
     }
 
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     /**
-     * JWT 토큰에서 사용자 이름 추출
+     * JWT 토큰에서 이메일 추출
      */
     public String getEmail(String token) {
-        Claims claims = Jwts.parser()
-            .verifyWith(secretKey)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload();
+        return getClaims(token).getSubject();
+    }
 
-        return claims.getSubject();
+    /**
+     * JWT 토큰에서 멤버십 등급 추출
+     */
+    public String getMembership(String token) {
+        return getClaims(token).get("membership", String.class);
     }
 
     /**
      * JWT 토큰 유효성 검증
-     *
-     * TODO: 개선 사항
      * - 토큰 블랙리스트 체크 (로그아웃된 토큰)
      * - 토큰 갱신 로직
-     * - 상세한 예외 처리
+     * - 예외를 catch하지 않고 그대로 전파 → JwtAuthenticationFilter에서 처리
      */
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parser()
+    public void validateToken(String token) {
+        Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token);
-            return true;
-        } catch (Exception e) {
-            // TODO: 구체적인 예외 처리 구현
-            // - ExpiredJwtException: 만료된 토큰
-            // - MalformedJwtException: 잘못된 형식
-            // - SignatureException: 서명 오류
-            return false;
-        }
+        // - ExpiredJwtException: 만료된 토큰
+        // - MalformedJwtException: 잘못된 형식
+        // - SignatureException: 서명 오류
     }
 }
