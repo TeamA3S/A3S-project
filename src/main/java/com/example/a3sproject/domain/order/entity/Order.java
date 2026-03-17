@@ -5,7 +5,6 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.entity.BaseEntity;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
-import com.example.a3sproject.global.exception.domain.order.InvalidQuantityException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
