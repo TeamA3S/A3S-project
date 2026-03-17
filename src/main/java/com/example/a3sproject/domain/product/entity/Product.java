@@ -1,7 +1,11 @@
 package com.example.a3sproject.domain.product.entity;
 
 
+import com.example.a3sproject.domain.product.enums.ProductCategory;
+import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.global.entity.BaseEntity;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.ProductException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -38,9 +42,6 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private ProductCategory productCategory;
 
-    // TODO: 추후 주문 엔터티와 연관관계 매핑.
-    // TODO: 추후 동시성 문제 -> 비관or낙관 락
-
     @Builder
     public Product(String name, int price, int stock, String description, ProductStatus productStatus, ProductCategory productCategory) {
         this.name = name;
@@ -59,7 +60,7 @@ public class Product extends BaseEntity {
     // 재고 차감
     public void decreaseStock(int quantity){
         if (this.stock - quantity < 0) {
-            throw new IllegalArgumentException("재고가 부족합니다."); // TODO: 커스텀예외 필요
+            throw new ProductException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
         this.stock = this.stock - quantity;
     }
