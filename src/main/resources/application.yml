@@ -11,6 +11,26 @@ spring:
     mode: HTML
     encoding: UTF-8
 
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+    defer-datasource-initialization: true
+
 server:
   port: 8080
   servlet:
@@ -32,3 +52,16 @@ management:
     web:
       exposure:
         include: health, info
+
+logging:
+  level:
+    root: info
+    com:
+      example:
+        a3sproject: debug
+    org:
+      hibernate:
+        SQL: debug
+        type:
+          descriptor:
+            sql: trace
