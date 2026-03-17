@@ -30,21 +30,21 @@ public class Membership extends BaseEntity {
     @Column(nullable = false)
     private MembershipGrade grade;
 
-    // 총 결제 금액
-    @Column(nullable = false)
-    private int totalPaymentAmount;
-
     // 회원가입시 초기화용 정적 팩토리 메서드
     public static  Membership init(User user) {
         Membership membership = new Membership();
         membership.user = user;
         membership.grade = MembershipGrade.NORMAL;
-        membership.totalPaymentAmount = 0;
         return membership;
     }
 
+    // User의 totalPaymentAmount 기반으로 등급 갱신
+    public void updateGrade(int totalPaymentAmount) {
+        this.grade = calculateGrade(totalPaymentAmount);
+    }
+
     // 등급 갱신 로직
-    private MembershipGrade updateGrade(int totalAmount) {
+    private MembershipGrade calculateGrade(int totalAmount) {
         if (totalAmount >= 500_000) return MembershipGrade.VVIP;
         if (totalAmount >= 300_000) return MembershipGrade.VIP;
         return MembershipGrade.NORMAL;
@@ -59,9 +59,4 @@ public class Membership extends BaseEntity {
         };
     }
 
-    // 총 결제 금액 업데이트 및 등급 갱신
-    public void updateTotalPaymentAmount(int amount) {
-        this.totalPaymentAmount += amount;
-        this.grade = updateGrade(this.totalPaymentAmount);
-    }
 }
