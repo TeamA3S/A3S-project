@@ -39,6 +39,7 @@ public class Membership extends BaseEntity {
         Membership membership = new Membership();
         membership.user = user;
         membership.grade = MembershipGrade.NORMAL;
+        membership.totalPaymentAmount = 0;
         return membership;
     }
 
