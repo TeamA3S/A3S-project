@@ -48,24 +48,6 @@ public class Membership extends BaseEntity {
         return membership;
     }
 
-    // 포인트 차감
-    public void usePoint(int amount) {
-        if (this.pointBalance < amount) {
-            throw new PointException(ErrorCode.POINT_NOT_ENOUGH);
-        }
-        this.pointBalance -= amount;
-    }
-
-    // 포인트 적립
-    public void earnPoint(int amount) {
-        this.pointBalance += amount;
-    }
-
-    // 포인트 복수
-    public void restorePoint(int amount) {
-        this.pointBalance += amount;
-    }
-
     // 총 결제 금액 업데이트 및 등급 갱신
     public void updateTotalPaymentAmount(int amount) {
         this.totalPaymentAmount += amount;
