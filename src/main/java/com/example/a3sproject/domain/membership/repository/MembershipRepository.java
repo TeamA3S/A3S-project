@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.QueryHints;
 
 import java.util.Optional;
 
-public interface MembershipRepository extends JpaRepository<Membership, Long> {}
+public interface MembershipRepository extends JpaRepository<Membership, Long> {
+}
