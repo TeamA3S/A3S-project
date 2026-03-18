@@ -68,7 +68,7 @@ public class PointService {
         pointRepository.save(tx);
     }
 
-    // 포인트 복수 (결제 실패 시 자동 호출)
+    // 포인트 복구 (결제 실패 시 자동 호출)
     @Transactional
     public void restorePoint(Long userId, Long orderId, int amount) {
 
