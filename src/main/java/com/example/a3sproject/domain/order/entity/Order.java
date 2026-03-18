@@ -5,10 +5,12 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.entity.BaseEntity;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
+import com.example.a3sproject.global.security.CustomUserDetails;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +47,7 @@ public class Order extends BaseEntity {
     private List<OrderItem> orderItems = new ArrayList<>();
 
 
-    private Order(String orderNumber, User user) {
+    private Order(User user, String orderNumber) {
         this.orderNumber = orderNumber;
         this.user = user;
         this.orderStatus = OrderStatus.PENDING;
@@ -68,7 +70,7 @@ public class Order extends BaseEntity {
             throw new OrderException(ErrorCode.INVALID_INPUT);
         }
 
-        Order order = new Order(orderNumber, user);
+        Order order = new Order(user, orderNumber);
         orderItems.forEach(order::addOrderItem);
         order.totalAmount = order.calculateTotalAmount();
         return order;

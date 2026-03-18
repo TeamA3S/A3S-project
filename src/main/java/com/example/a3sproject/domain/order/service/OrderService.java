@@ -2,6 +2,8 @@ package com.example.a3sproject.domain.order.service;
 
 import com.example.a3sproject.domain.order.dto.CreateOrderRequestDto;
 import com.example.a3sproject.domain.order.dto.CreateOrderResponseDto;
+import com.example.a3sproject.domain.order.dto.GetOrderDetailResponseDto;
+import com.example.a3sproject.domain.order.dto.GetOrderListResponseDto;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.repository.OrderRepository;
@@ -9,11 +11,15 @@ import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.domain.user.entity.User;
+import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
 import com.example.a3sproject.global.exception.domain.ProductException;
 
+import com.example.a3sproject.global.exception.domain.UserException;
+import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +36,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
     /**
      * 예) [요청]
@@ -44,7 +51,10 @@ public class OrderService {
 
     // 주문 생성
     @Transactional
-    public CreateOrderResponseDto createOrder(User user, CreateOrderRequestDto requestDto) {
+    public CreateOrderResponseDto createOrder(Long userId, CreateOrderRequestDto requestDto) {
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new OrderException(ErrorCode.USER_NOT_FOUND)
+        );
         // 주문 상품이 없으면 예외
         if (requestDto.getOrderItems() == null || requestDto.getOrderItems().isEmpty()) {
             throw new OrderException(ErrorCode.INVALID_INPUT);
@@ -79,25 +89,43 @@ public class OrderService {
             throw new OrderException(ErrorCode.ORDERITEM_NOT_FOUND);
         }
 
+        // 상품 리스트를 맵으로 변환 (id를 키로, 상품을 값으로)
+        // product(id=1, "나이키 신발", 100000)
+        // product(id=3, "아디다스 신발", 50000)
+        // ->
+        // {
+        //  1 : 나이키 신발,
+        //  3 : 아디다스 신발
+        // }
         Map<Long, Product> productMap = products.stream()
                 .collect(Collectors.toMap(Product::getId, Function.identity()));
 
+        // 주문 상품을 담을 리스트
         List<OrderItem> orderItems = new ArrayList<>();
 
+        // entrySet() = (id, quantity) -> entry = 상품id와 수량 한 묶음
         for (Map.Entry<Long, Integer> entry : quantityByProductId.entrySet()) {
+            // 상품id로 상품객체를 찾는다
             Product product = productMap.get(entry.getKey());
+            // 수량 가져오기
             Integer quantity = entry.getValue();
 
+            // 해당 상품의 수량체크 (재고 사전확인)
             validateProductForOrder(product, quantity);
-
+            // 상품과 수량을 주문상품에 생성 -> 주문상품 리스트에 추가
             orderItems.add(OrderItem.createOrderItem(product, quantity));
         }
 
+        // 주문번호 발급
         String orderNumber = generateOrderNumber();
 
+        // 주문 상품 리스트, 주문번호를 기반으로 주문 생성
         Order order = Order.createOrder(user, orderItems, orderNumber);
+
+        // DB에 저장
         Order savedOrder = orderRepository.save(order);
 
+        // dto에 담아서 응답 반환
         return new CreateOrderResponseDto(
                 savedOrder.getId(),
                 savedOrder.getTotalAmount(),
@@ -121,5 +149,26 @@ public class OrderService {
         return "ODN-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
                 + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
     }
+
+    // 주문 목록 조회
+    public List<GetOrderListResponseDto> getAllOrderList(Long userId) {
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(order -> GetOrderListResponseDto.of(
+                        order,
+                        null,
+                        order.getTotalAmount(),
+                        null
+                )).toList();
+    }
+
+    // 주문 상세 조회
+    public GetOrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
+        Order order = orderRepository.findByIdAndUserId(orderId, userId).orElseThrow(
+                () -> new OrderException(ErrorCode.ORDER_NOT_FOUND)
+        );
+        return GetOrderDetailResponseDto.of(order);
+    }
+
 
 }
