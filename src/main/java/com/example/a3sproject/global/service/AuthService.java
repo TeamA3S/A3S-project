@@ -1,5 +1,7 @@
 package com.example.a3sproject.global.service;
 
+import com.example.a3sproject.domain.membership.entity.Membership;
+import com.example.a3sproject.domain.membership.repository.MembershipRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.dto.LoginRequestDto;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -36,13 +39,17 @@ public class AuthService {
             throw new UserException(ErrorCode.USER_UNAUTHORIZED);
         }
 
-        // 3. Access Token 발급 (membershipGrade 포함)
+        // 3. 멤버십 등급 조회
+        Membership membership = membershipRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        // 4. Access Token 발급 (membershipGrade 포함)
         String accessToken = jwtTokenProvider.createToken(
                 user.getEmail(),
-                user.getMembershipGrade()
+                membership.getGrade()
         );
 
-        // 4. Refresh Token 발급 및 저장 (Rotation)
+        // 5. Refresh Token 발급 및 저장 (Rotation)
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
         refreshTokenRepository.save(
                 new RefreshToken(
@@ -68,15 +75,20 @@ public class AuthService {
         User user = (User) userRepository.findByEmail(savedToken.getEmail())
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
-        // 4. Refresh Token Rotation
+        // 4. 멤버십 등급 조회
+        Membership membership = membershipRepository.findByUser(user)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+
+        // 5. Refresh Token Rotation
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
         savedToken.rotate(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
         refreshTokenRepository.save(savedToken);
 
-        // 5. 새 Access Token 발급
+        // 6. 새 Access Token 발급
         String newAccessToken = jwtTokenProvider.createToken(
                 user.getEmail(),
-                user.getMembershipGrade()
+                membership.getGrade()
         );
 
         return new AuthTokenDto(newAccessToken, newRefreshToken, user.getEmail());

@@ -48,32 +48,15 @@ public class PointTransaction extends BaseEntity {
 
     // 정적 팩토리 메서드
     public static PointTransaction of(Long userId, Long orderId,
-                                      int points, PointTransactionType type,
+                                      int points,int pointBalance, PointTransactionType type,
                                       LocalDateTime expiredAt) {
         PointTransaction tx = new PointTransaction();
         tx.userId = userId;
         tx.orderId = orderId;
         tx.points = points;
+        tx.pointBalance = pointBalance;
         tx.type = type;
         tx.expiredAt = expiredAt;
         return tx;
-    }
-
-    // 포인트 차감
-    public void usePoint(int amount) {
-        if (this.pointBalance < amount) {
-            throw new PointException(ErrorCode.POINT_NOT_ENOUGH);
-        }
-        this.pointBalance -= amount;
-    }
-
-    // 포인트 적립
-    public void earnPoint(int amount) {
-        this.pointBalance += amount;
-    }
-
-    // 포인트 복구
-    public void restorePoint(int amount) {
-        this.pointBalance += amount;
     }
 }
