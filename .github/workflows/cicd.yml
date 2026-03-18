@@ -106,22 +106,42 @@ jobs:
             --output text \
             --region ap-northeast-2)
 
-          echo "배포 대상 인스턴스: $INSTANCE_ID"
+          # Parameter Store에서 값 읽기
+          DB_URL=$(aws ssm get-parameter --name "/a3s/DB_URL" --with-decryption --query "Parameter.Value" --output text)
+          DB_USERNAME=$(aws ssm get-parameter --name "/a3s/DB_USERNAME" --with-decryption --query "Parameter.Value" --output text)
+          DB_PASSWORD=$(aws ssm get-parameter --name "/a3s/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+          JWT_SECRET=$(aws ssm get-parameter --name "/a3s/JWT_SECRET" --with-decryption --query "Parameter.Value" --output text)
+          JWT_VALIDITY=$(aws ssm get-parameter --name "/a3s/JWT_VALIDITY" --with-decryption --query "Parameter.Value" --output text)
+          JWT_REFRESH_VALIDITY=$(aws ssm get-parameter --name "/a3s/JWT_REFRESH_VALIDITY" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_API_SECRET=$(aws ssm get-parameter --name "/a3s/PORTONE_API_SECRET" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_STORE_ID=$(aws ssm get-parameter --name "/a3s/PORTONE_STORE_ID" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_CHANNEL_KG=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_KG" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_CHANNEL_TOSS=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_TOSS" --with-decryption --query "Parameter.Value" --output text)
 
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
-            --parameters commands='[
-              "docker pull ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest",
-              "docker stop app || true",
-              "docker rm app || true",
-              "docker run -d --name app -p 8080:8080 --restart unless-stopped -e SPRING_PROFILES_ACTIVE=prod ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest"
-            ]' \
+            --parameters commands="[
+              \"docker pull ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\",
+              \"docker stop app || true\",
+              \"docker rm app || true\",
+              \"docker run -d --name app -p 8080:8080 --restart unless-stopped \
+                -e SPRING_PROFILES_ACTIVE=prod \
+                -e DB_URL=$DB_URL \
+                -e DB_USERNAME=$DB_USERNAME \
+                -e DB_PASSWORD=$DB_PASSWORD \
+                -e JWT_SECRET=$JWT_SECRET \
+                -e JWT_VALIDITY=$JWT_VALIDITY \
+                -e JWT_REFRESH_VALIDITY=$JWT_REFRESH_VALIDITY \
+                -e PORTONE_API_SECRET=$PORTONE_API_SECRET \
+                -e PORTONE_STORE_ID=$PORTONE_STORE_ID \
+                -e PORTONE_CHANNEL_KG=$PORTONE_CHANNEL_KG \
+                -e PORTONE_CHANNEL_TOSS=$PORTONE_CHANNEL_TOSS \
+                ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\"
+            ]" \
             --region ap-northeast-2 \
             --query "Command.CommandId" \
             --output text)
-
-          echo "SSM Command ID: $COMMAND_ID"
 
           aws ssm wait command-executed \
             --command-id $COMMAND_ID \
