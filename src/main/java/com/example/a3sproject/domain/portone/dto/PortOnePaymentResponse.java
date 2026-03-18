@@ -11,6 +11,7 @@ public record PortOnePaymentResponse (
         OffsetDateTime paidAt
 ) {
     public record Amount(
-            int total
+            int total,
+            int discount
     ) {}
 }

@@ -12,4 +12,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByPortOneIdAndPaidStatus(String portOneId, PaidStatus paidStatus);
     // 결제 확정시 탐색
     Optional<Payment> findByOrder(Order order);
+
+    Optional<Payment> findByPaymentUuid(String paymentUuid);
 }
