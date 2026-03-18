@@ -3,17 +3,11 @@ package com.example.a3sproject.global.controller;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.dto.LoginRequestDto;
 import com.example.a3sproject.global.dto.LoginResponseDto;
-import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.UserException;
-import com.example.a3sproject.global.security.JwtTokenProvider;
-import com.example.a3sproject.global.security.refreshtoken.entity.RefreshToken;
 import com.example.a3sproject.global.security.refreshtoken.repository.RefreshTokenRepository;
+import com.example.a3sproject.global.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -25,9 +19,8 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AuthService authService;
 
     /**
      * 로그인 API
@@ -39,48 +32,13 @@ public class AuthController {
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(
             @RequestBody LoginRequestDto request) {
 
-        // 1. 인증 시도 — 실패 시 BadCredentialsException → GlobalExceptionHandler 위임
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-        } catch (BadCredentialsException e) {
-            throw new UserException(ErrorCode.USER_UNAUTHORIZED);
-        }
+        AuthService.AuthTokenDto tokens = authService.login(request);
 
-        // 2. Access Token 발급
-        String accessToken = jwtTokenProvider.createToken(request.getEmail());
-
-        // 3. Refresh Token 발급 및 DB 저장 (Rotation: 기존 토큰 교체)
-        String refreshTokenValue = jwtTokenProvider.createRefreshToken(request.getEmail());
-
-        refreshTokenRepository.findByEmail(request.getEmail())
-                .ifPresentOrElse(
-                        existing -> existing.rotate(
-                                refreshTokenValue,
-                                jwtTokenProvider.getRefreshTokenExpiresAt()
-                        ),
-                        () -> refreshTokenRepository.save(
-                                RefreshToken.builder()
-                                        .email(request.getEmail())
-                                        .token(refreshTokenValue)
-                                        .expiresAt(jwtTokenProvider.getRefreshTokenExpiresAt())
-                                        .build()
-                        )
-                );
-
-        // 4. 응답
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + accessToken)
+                .header("Authorization", "Bearer " + tokens.accessToken())
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
-                        LoginResponseDto.builder()
-                                .refreshToken(refreshTokenValue)
-                                .email(request.getEmail())
-                                .build()
+                        new LoginResponseDto(tokens.refreshToken(), tokens.email())
                 ));
     }
 
@@ -92,33 +50,13 @@ public class AuthController {
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> reissue(
             @RequestBody LoginResponseDto request) {
 
-        String refreshTokenValue = request.getRefreshToken();
-
-        // 1. DB에서 Refresh Token 조회
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
-                .orElseThrow(() -> new UserException(ErrorCode.USER_UNAUTHORIZED));
-
-        // 2. 만료 여부 확인
-        if (refreshToken.isExpired()) {
-            refreshTokenRepository.delete(refreshToken);
-            throw new UserException(ErrorCode.USER_UNAUTHORIZED);
-        }
-
-        // 3. Access Token 재발급
-        String newAccessToken = jwtTokenProvider.createToken(refreshToken.getEmail());
-
-        // 4. Refresh Token Rotation
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(refreshToken.getEmail());
-        refreshToken.rotate(newRefreshToken, jwtTokenProvider.getRefreshTokenExpiresAt());
+        AuthService.AuthTokenDto tokens = authService.reissue(request.getRefreshToken());
 
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + newAccessToken)
+                .header("Authorization", "Bearer " + tokens.accessToken())
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
-                        LoginResponseDto.builder()
-                                .refreshToken(newRefreshToken)
-                                .email(refreshToken.getEmail())
-                                .build()
+                        new LoginResponseDto(tokens.refreshToken(), tokens.email())
                 ));
     }
 

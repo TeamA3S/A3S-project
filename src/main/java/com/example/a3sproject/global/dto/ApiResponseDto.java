@@ -13,18 +13,6 @@ public interface ApiResponseDto<T> {
         return new SuccessDto<>(HttpStatus.NO_CONTENT);
     }
 
-    static <T> ApiResponseDto<T> pagination(HttpStatus status,Page<T> page , String message) {
-        return new PageResponseDto<>(
-                status,
-                page.getNumber(),
-                page.getSize(),
-                page.getContent(),
-                page.getTotalPages(),
-                page.getTotalElements(),
-                message
-                );
-    }
-
     static <T> ApiResponseDto<T> error(String code, String message) {
         return new ErrorDto<>(code, message, null);
     }

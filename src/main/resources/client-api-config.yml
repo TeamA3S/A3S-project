@@ -28,8 +28,8 @@ api:
     # 인증 (Authentication)
     # ========================================
     login:
-      url:
-      method:
+      url: /api/auth/login
+      method: POST
       description: 사용자 로그인
       request:
         fields:
@@ -56,6 +56,10 @@ api:
               type: string
               required: false
               description: 로그인한 사용자 이메일
+            - name: refreshToken
+              type: string
+              required: false
+              description: 로그인한 사용자에게 발급된 리프레시토큰
 
     register:
       url:
