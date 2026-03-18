@@ -1,7 +1,7 @@
-package com.example.a3sproject.domain.point.controller;
+package com.example.a3sproject.domain.membership.controller;
 
-import com.example.a3sproject.domain.point.dto.MyPointTransactionResponseDto;
-import com.example.a3sproject.domain.point.service.PointService;
+import com.example.a3sproject.domain.membership.dto.MyMembershipResponseDto;
+import com.example.a3sproject.domain.membership.service.MembershipService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -12,21 +12,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/points")
+@RequestMapping("/api/memberships")
 @RequiredArgsConstructor
-public class PointController {
+public class MembershipController {
 
-    private final PointService pointService;
+    private final MembershipService membershipService;
 
-    // 내 포인트 거래 내역 조회
+    // 내 멤버십 등급 조회
     @GetMapping("/me")
-    public ResponseEntity<ApiResponseDto<List<MyPointTransactionResponseDto>>> getMyPointTransactions(
+    public ResponseEntity<ApiResponseDto<MyMembershipResponseDto>> getMyMembership(
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
-        List<MyPointTransactionResponseDto> response = pointService.getMyPointTransactions(userDetails.getEmail());
+        MyMembershipResponseDto response = membershipService.getMyMembership(userDetails.getEmail());
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponseDto.success(HttpStatus.OK, response));

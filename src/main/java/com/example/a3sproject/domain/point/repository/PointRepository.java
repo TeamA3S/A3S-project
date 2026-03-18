@@ -22,11 +22,4 @@ public interface PointRepository extends JpaRepository<PointTransaction, Long> {
     List<PointTransaction> findByUserIdAndType(Long userId, PointTransactionType type);
 
     List<PointTransaction> findByUserIdAndExpiredAtBefore(Long userId, LocalDateTime expiredAtBefore);
-
-    // 동시성 문제를 대비해서 비관적 락을 생성
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-
-    // 무한 대기를 방지하기 위해서 락 대기 시간을 제한
-    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
-    Optional<Membership> findByUserId(Long userId);
 }
