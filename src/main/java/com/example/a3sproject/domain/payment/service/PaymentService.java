@@ -46,7 +46,7 @@ public class PaymentService {
         paymentRepository.save(payment);
         // 4. 응답 반환
         return new PaymentTryResponse(payment.getPaymentUuid());
-    }
+    } // Todo : 결제 대기중인 주문인지 검증 추가
 
     // Client Confirm 전용 - orderId로 조회
     @Transactional

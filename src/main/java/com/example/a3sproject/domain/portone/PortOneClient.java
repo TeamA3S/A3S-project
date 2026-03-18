@@ -22,7 +22,7 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
                 .uri("/payments/{paymentId}", portOneId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    throw new PaymentException(ErrorCode.PAYMENT_NOT_FOUND);
+                    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 }) // 400번대 에러
                 .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
@@ -40,10 +40,10 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
                 .body(cancelRequest)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                    throw new PaymentException(ErrorCode.PAYMENT_NOT_FOUND);
+                    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 }) // 400번대 에러
                 .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                    throw new PaymentException(ErrorCode.INTERNAL_SERVER_ERROR);
+                    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 }) // 500번대 에러
                 .body(PortOneCancelPaymentResponse.class);
     }
