@@ -16,13 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
-@Table(name = "orders",
-    uniqueConstraints = {
-        @UniqueConstraint(
-                name = "uk_orders-order_number",
-                columnNames = {"order_number"}
-        )
-    })
+@Table(name = "orders")
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
@@ -33,7 +27,7 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String orderNumber;
 
     @Column(nullable = false)
