@@ -1,5 +1,6 @@
 package com.example.a3sproject.domain.user.entity;
 
+import com.example.a3sproject.domain.membership.enums.MembershipGrade;
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -41,14 +42,18 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Integer totalPaymentAmount;
 
+    @Column(nullable = false)
+    private MembershipGrade membershipGrade;
+
     // 회원가입용 생성자
-    public User(String name, String email, String password, String phoneNumber, Integer pointBalance ) {
+    public User(String name, String email, String password, String phoneNumber, Integer pointBalance, Integer totalPaymentAmount, MembershipGrade membershipGrade) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.phoneNumber = phoneNumber;
         this.pointBalance = 0;
         this.totalPaymentAmount = 0;
+        this.membershipGrade = MembershipGrade.NORMAL;
     }
 
     // 총 결제 금액 업데이트

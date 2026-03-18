@@ -1,5 +1,6 @@
 package com.example.a3sproject.global.security;
 
+import com.example.a3sproject.domain.membership.enums.MembershipGrade;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -60,13 +61,13 @@ public class JwtTokenProvider {
      *
      * - 사용자 멤버십(membership) 정보 추가
      */
-    public String createToken(String email) {
+    public String createToken(String email, MembershipGrade membershipGrade) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + tokenValidityInMilliseconds);
 
         return Jwts.builder()
             .subject(email)
-            .claim("membership", membership)
+            .claim("membershipGrade", membershipGrade.name())
             .issuedAt(now)
             .expiration(validity)
             .signWith(secretKey)
