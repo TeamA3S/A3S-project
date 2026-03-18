@@ -37,10 +37,13 @@ public class Payment extends BaseEntity {
     // 환불일
     private OffsetDateTime  paidAt; // 결제완료 시각
 
-    public Payment(Order order, int paidAmount) {
+    private String paymentUuid;
+
+    public Payment(Order order, int paidAmount, String paymentUuid) {
         this.order = order;
         this.paidAmount = paidAmount;
         this.paidStatus = PaidStatus.PENDING;
+        this.paymentUuid = paymentUuid;
     }
 
     // 결제 확정 시점 → 세 값이 항상 함께 변경됨

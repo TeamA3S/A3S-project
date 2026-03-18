@@ -27,10 +27,26 @@ public class Refund extends BaseEntity {
     @JoinColumn(name = "payment_id")
     private Payment payment;
 
-    private Long refundAmount;
+    private int refundAmount;
     private String refundReason;
+    @Enumerated(EnumType.STRING)
     private RefundStatus refundStatus;
     // 환불 처리 시각
 
+    public Refund(Payment payment, String refundReason) {
+        this.payment = payment;
+        this.refundAmount = payment.getPaidAmount();
+        this.refundReason = refundReason;
+        this.refundStatus = RefundStatus.REQUEST;
+    }
 
+    // 환불 완료 상태 변경
+    public void completeRefund() {
+        this.refundStatus = RefundStatus.COMPLETED;
+    }
+
+    // 환불 실패 상태 변경
+    public void cancelRefund() {
+        this.refundStatus = RefundStatus.FAILED;
+    }
 }
