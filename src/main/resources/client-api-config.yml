@@ -152,8 +152,8 @@ api:
               description: 재고 수량
 
     create-order:
-      url:
-      method:
+      url: /orders
+      method: POST
       description: 주문 생성 (총 금액은 서버에서 계산)
       request:
         fields:
@@ -179,8 +179,8 @@ api:
               description: 생성된 주문 번호
 
     list-orders:
-      url:
-      method:
+      url: /orders
+      method: GET
       description: 주문 목록 조회 (현재 로그인한 사용자의 주문)
       response:
         body:
