@@ -1,11 +1,17 @@
 package com.example.a3sproject.domain.order.repository;
 
 import com.example.a3sproject.domain.order.entity.Order;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    // 주문 상세조회시 본인 주문이 맞는지 검증을 위한 조회메서드
+    @EntityGraph(attributePaths = {"orderItems", "orderItems.product"})
+    Optional<Order> findByIdAndUserId(Long orderId, Long userId);
 }

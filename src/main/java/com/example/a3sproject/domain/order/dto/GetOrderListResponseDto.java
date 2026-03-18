@@ -21,6 +21,11 @@ public class GetOrderListResponseDto {
     private final OrderStatus orderStatus;   // 주문 상태
     private final LocalDateTime createdAt;   // 주문 생성 시간
 
+    // TODO: 결제 구현 후 적용
+//    private final String paymentStatus;    // 결제 상태 (추후 Payment 구현 후 반영)
+//    private final String paymentMethod;    // 결제 수단 (추후 반영)
+//    private final Integer paidAmount;      // 실제 결제 금액 (추후 반영)
+
     public GetOrderListResponseDto(
             Long orderId,
             String orderNumber,

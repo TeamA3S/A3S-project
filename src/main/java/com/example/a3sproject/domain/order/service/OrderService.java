@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.order.service;
 
 import com.example.a3sproject.domain.order.dto.CreateOrderRequestDto;
 import com.example.a3sproject.domain.order.dto.CreateOrderResponseDto;
+import com.example.a3sproject.domain.order.dto.GetOrderDetailResponseDto;
 import com.example.a3sproject.domain.order.dto.GetOrderListResponseDto;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
@@ -160,4 +161,14 @@ public class OrderService {
                         null
                 )).toList();
     }
+
+    // 주문 상세 조회
+    public GetOrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
+        Order order = orderRepository.findByIdAndUserId(orderId, userId).orElseThrow(
+                () -> new OrderException(ErrorCode.ORDER_NOT_FOUND)
+        );
+        return GetOrderDetailResponseDto.of(order);
+    }
+
+
 }
