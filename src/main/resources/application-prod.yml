@@ -2,8 +2,6 @@ spring:
   config:
     activate:
       on-profile: prod
-    import:
-      - "optional:aws-parameterstore:/a3s/"
 
   thymeleaf:
     cache: true
