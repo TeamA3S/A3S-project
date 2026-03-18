@@ -77,6 +77,9 @@ public class SecurityConfig {
                             "/api/auth/reissue"
                     ).permitAll()
 
+                    // 헬스체크 허용
+                    .requestMatchers("/actuator/**").permitAll()
+
                     // 5) 그 외 API는 인증 필요
                     .requestMatchers("/api/**").authenticated()
 
