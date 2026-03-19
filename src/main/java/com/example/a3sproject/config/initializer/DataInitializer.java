@@ -1,5 +1,8 @@
 package com.example.a3sproject.config.initializer;
 
+import com.example.a3sproject.domain.membership.entity.Membership;
+import com.example.a3sproject.domain.membership.enums.MembershipGrade;
+import com.example.a3sproject.domain.membership.repository.MembershipRepository;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductCategory;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
@@ -21,6 +24,7 @@ public class DataInitializer implements ApplicationRunner {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,6 +40,10 @@ public class DataInitializer implements ApplicationRunner {
                     "010-0000-0000"
             );
             userRepository.save(admin);
+
+            // 멤버십도 함께 생성
+            Membership membership = Membership.init(admin);
+            membershipRepository.save(membership);
         }
 
         // 상품 더미데이터 초기화
