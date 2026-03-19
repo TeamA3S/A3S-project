@@ -15,7 +15,7 @@ public class PaymentRollback {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failPayment(Payment payment) {
-        payment.failPayment();
+        payment.failStatus();
         paymentRepository.save(payment);
         // 트랜잭션 A가 롤백돼도 이건 이미 커밋됨! ✅
     }
