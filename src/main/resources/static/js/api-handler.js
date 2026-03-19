@@ -90,6 +90,11 @@ async function makeApiRequest(endpointKey, options = {}) {
         if (returnHeaders) {
             // 언래핑 처리 추가
             const unwrapped = (data && data.data !== undefined) ? data.data : data;
+            if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
+                if (unwrapped.success === undefined && data.success !== undefined) {
+                    unwrapped.success = data.success;
+                }
+            }
             return {
                 data: unwrapped,
                 headers: Object.fromEntries(response.headers.entries())
