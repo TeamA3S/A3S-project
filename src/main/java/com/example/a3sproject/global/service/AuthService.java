@@ -51,6 +51,10 @@ public class AuthService {
 
         // 5. Refresh Token 발급 및 저장 (Rotation)
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
+
+        // 기존 토큰 삭제 추가
+        refreshTokenRepository.deleteByEmail(user.getEmail());
+
         refreshTokenRepository.save(
                 new RefreshToken(
                         user.getEmail(),

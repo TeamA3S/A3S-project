@@ -45,6 +45,7 @@ public class User extends BaseEntity {
     private Integer totalPaymentAmount;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private MembershipGrade membershipGrade;
 
     // 회원가입용 생성자

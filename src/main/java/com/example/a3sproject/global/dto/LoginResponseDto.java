@@ -8,6 +8,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class LoginResponseDto {
+    private final boolean success = true;
     private final String refreshToken;
     private final String email;
 }
