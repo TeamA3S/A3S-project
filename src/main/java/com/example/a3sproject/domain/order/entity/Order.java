@@ -21,8 +21,6 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order extends BaseEntity {
 
-    // TODO: 추후 동시성 문제 -> 비관or낙관 락
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,14 +35,15 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private OrderStatus orderStatus;
 
-    // 주문일은 생성될때 BaseEntity 활용
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    private int usedPointAmount;   // 사용 포인트
+    private int finalAmount;       // 최종 결제 금액
 
 
     private Order(User user, String orderNumber) {
@@ -79,6 +78,32 @@ public class Order extends BaseEntity {
     // 주문 상태 변경 메서드
     public void updateOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus;
+    }
+
+    // 결제 확정 후 결제완료로 변경
+    public void markPaid() {
+        // 대기상태가 아니면 에러
+        if (this.orderStatus != OrderStatus.PENDING) {
+            throw new OrderException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.orderStatus = OrderStatus.COMPLETED;
+    }
+
+    // 환불 완료 후 환불로 변경
+    public void markRefunded() {
+        if (this.orderStatus != OrderStatus.COMPLETED) {
+            throw new OrderException(ErrorCode.INVALID_ORDER_STATUS);
+        }
+        this.orderStatus = OrderStatus.REFUNDED;
+    }
+
+    // 포인트 적용
+    public void applyPointUsage(int usedPointAmount) {
+        if (usedPointAmount < 0 || usedPointAmount > this.totalAmount) {
+            throw new OrderException(ErrorCode.INVALID_INPUT);
+        }
+        this.usedPointAmount = usedPointAmount;
+        this.finalAmount = this.totalAmount - usedPointAmount;
     }
 }
 

@@ -29,14 +29,24 @@ public class Payment extends BaseEntity {
     @JoinColumn(name = "order_id")
     private Order order;
 
+    @Column
     private String portOneId;
-    private int paidAmount;
-    @Enumerated(EnumType.STRING)
-    private PaidStatus paidStatus;
-    // 결제일
-    // 환불일
-    private OffsetDateTime  paidAt; // 결제완료 시각
 
+    @Column(nullable = false)
+    private int paidAmount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaidStatus paidStatus;
+
+    // 결제일
+    @Column
+    private OffsetDateTime paidAt;
+    // 환불일
+    @Column
+    private OffsetDateTime  refundedAt;
+
+    @Column(name = "payment_uuid", nullable = false, unique = true, updatable = false)
     private String paymentUuid;
 
     public Payment(Order order, int paidAmount, String paymentUuid) {
@@ -44,6 +54,19 @@ public class Payment extends BaseEntity {
         this.paidAmount = paidAmount;
         this.paidStatus = PaidStatus.PENDING;
         this.paymentUuid = paymentUuid;
+    }
+
+    // 기존 결제를 다시 결제 시도 가능한 상태로 덮어쓴다 (기록 재활용)
+    public void preparePendingAttempt(int paidAmount) {
+        this.paidAmount = paidAmount;
+        this.paidStatus = PaidStatus.PENDING;
+        this.paidAt = null;
+        this.portOneId = null;
+    }
+
+    // 이미 끝난 결제인지 확인
+    public boolean isFinalized() {
+        return this.paidStatus == PaidStatus.SUCCESS || this.paidStatus == PaidStatus.REFUNDED;
     }
 
     // 결제 확정 시점 → 세 값이 항상 함께 변경됨
@@ -59,7 +82,8 @@ public class Payment extends BaseEntity {
     }
 
     // 환불 완료 시점 → 상태만 변경
-    public void refundPayment() {
+    public void refundPayment(OffsetDateTime refundedAt) {
         this.paidStatus = PaidStatus.REFUNDED;
+        this.refundedAt = refundedAt;
     }
 }

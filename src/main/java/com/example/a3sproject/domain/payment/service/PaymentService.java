@@ -31,33 +31,81 @@ public class PaymentService {
     private final ProductRepository productRepository;
     private final PortOneClient portOneClient;
 
-    @Transactional // 결제 기록 메서드
-    public PaymentTryResponse createPayment(PaymentTryRequest request) {
+    // 주문 이름 생성 메서드
+    private String buildOrderName(Order order) {
+        if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+            return "주문";
+        }
+
+        String firstItemName = order.getOrderItems().get(0).getProductName();
+        int itemCount = order.getOrderItems().size();
+
+        if (itemCount == 1) {
+            return firstItemName;
+        }
+        return firstItemName + " 외 " + (itemCount - 1) + "건";
+    }
+
+    @Transactional // 결제 시도(생성) 메서드
+    public PaymentTryResponse createPayment(Long userId, PaymentTryRequest request) {
         // 1. Order 조회
-        Order order = orderRepository.findById(request.orderId()).orElseThrow(
+        Order order = orderRepository.findByIdAndUser_Id(request.orderId(), userId).orElseThrow(
                 ()-> new PaymentException(ErrorCode.ORDER_NOT_FOUND)
         );
-        // 2. 금액 검증
-        if(order.getTotalAmount() != request.paidAmount()){
+        // 결제 가능한 주문 상태인지 확인
+        if (order.getOrderStatus() != OrderStatus.PENDING) {
+            throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
+        }
+        // 지금 단계는 일반 카드 결제만 구현
+        if (request.pointsToUse() != null && request.pointsToUse() > 0) {
+            throw new PaymentException(ErrorCode.INVALID_INPUT);
+        }
+        int payableAmount = order.getTotalAmount();
+
+        // 서버 계산 금액과 요청 금액 일치 검증
+        if (request.paidAmount() == null || request.paidAmount() != payableAmount) {
             throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
-        // 3. Payment 생성 및 저장
-        Payment payment = new Payment(order, request.paidAmount(), GenerateCodeUuid.generateCodeUuid("PMN"));
-        paymentRepository.save(payment);
-        // 4. 응답 반환
-        return new PaymentTryResponse(payment.getPaymentUuid());
-    } // Todo : 결제 대기중인 주문인지 검증 추가
+
+        Payment payment = paymentRepository.findByOrder(order) // 해당 결제와 관련된 주문이 이미 있는 지 확인
+                .map(existing -> {  // 있다면 map 순회
+                    if (existing.isFinalized()) {  // 이미 끝난 결제라면 에러
+                        throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
+                    }
+                    // 아니라면 다시 결제 시도 가능한 상태로 덮어쓰기
+                    existing.preparePendingAttempt(payableAmount);
+                    return existing;
+                })
+                // 없다면 새로운 결제 만들기
+                .orElseGet(() -> new Payment(
+                        order,
+                        payableAmount,
+                        GenerateCodeUuid.generateCodeUuid("PMN")
+                ));
+        Payment savedPayment = paymentRepository.save(payment);
+
+        return new PaymentTryResponse(
+                savedPayment.getPaymentUuid(),
+                buildOrderName(order),
+                savedPayment.getPaidAmount(),
+                "KRW"
+        );
+    }
 
     // Client Confirm 전용 - orderId로 조회
     @Transactional
-    public PaymentConfirmResponse confirmPayment(PaymentConfirmRequest request) {
-        Order order = orderRepository.findById(request.orderId()).orElseThrow(
+    public PaymentConfirmResponse confirmPayment(Long userId, PaymentConfirmRequest request) {
+        Order order = orderRepository.findByIdAndUser_Id(request.orderId(), userId).orElseThrow(
                 ()-> new PaymentException(ErrorCode.ORDER_NOT_FOUND)
         );
         Payment payment = paymentRepository.findByOrder(order).orElseThrow(
                 ()-> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND)
         );
 
+        // attempt 때 서버가 발급한 paymentId와 confirm 값이 같아야 함
+        if (!payment.getPaymentUuid().equals(request.portOneId())) {
+            throw new PaymentException(ErrorCode.PAYMENT_NOT_FOUND);
+        }
         processPaymentConfirm(payment, order, request.portOneId()); // 핵심 로직 호출
         return new PaymentConfirmResponse(order.getOrderNumber(), "결제가 완료되었습니다.");
     }
@@ -69,7 +117,6 @@ public class PaymentService {
                 ()-> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND)
         );
         Order order = payment.getOrder();
-
         processPaymentConfirm(payment, order, paymentUuid); // 동일한 핵심 로직 호출
     }
 
@@ -95,7 +142,7 @@ public class PaymentService {
         }
         // 6. 최종 확정
         payment.confirmPayment(portOneId, portOnePaymentResponse.paidAt()); // 상태 변경
-        order.updateOrderStatus(OrderStatus.PAID); // 주문 상태 성공으로 변경
+        order.updateOrderStatus(OrderStatus.COMPLETED); // 주문 상태 성공으로 변경
         paymentRepository.save(payment);
 
     }// Todo: 보상 트랜잭션 추가 해야함
