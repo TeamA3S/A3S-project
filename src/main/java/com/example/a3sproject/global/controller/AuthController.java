@@ -11,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,7 +37,6 @@ public class AuthController {
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
                         LoginResponseDto.builder()
-                                .success(true)
                                 .refreshToken(tokens.refreshToken())
                                 .email(tokens.email())
                                 .build()
@@ -61,7 +58,6 @@ public class AuthController {
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
                         LoginResponseDto.builder()
-                                .success(true)
                                 .refreshToken(tokens.refreshToken())
                                 .email(tokens.email())
                                 .build()
