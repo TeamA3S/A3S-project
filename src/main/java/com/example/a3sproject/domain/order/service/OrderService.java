@@ -14,6 +14,7 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
+import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.ProductException;
 
 import com.example.a3sproject.global.exception.domain.UserException;
@@ -172,8 +173,11 @@ public class OrderService {
 
     // 주문 이름 생성 메서드
     public String buildOrderName(Order order) {
-        if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
-            return "주문";
+        List<OrderItem> orderItems = order.getOrderItems();
+
+        // 주문상품이 없는데 주문이름 생성하려고 하면 에러
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new PaymentException(ErrorCode.INVALID_INPUT);
         }
 
         String firstItemName = order.getOrderItems().get(0).getProductName();

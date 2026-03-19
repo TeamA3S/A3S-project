@@ -190,7 +190,7 @@
         }
 
         function updateQuantity(productId, delta) {
-            const product = products.find(p => p.id === productId);
+            const product = products.find(p => p.productId === productId);
             if (!product) return;
 
             const input = document.getElementById(`qty-${productId}`);
@@ -219,7 +219,7 @@
             Object.keys(cart).forEach(productId => {
                 const qty = cart[productId];
                 if (qty > 0) {
-                    const product = products.find(p => p.id === productId);
+                    const product = products.find(p => p.productId === productId);
                     const subtotal = product.price * qty;
                     total += subtotal;
                     html += `
