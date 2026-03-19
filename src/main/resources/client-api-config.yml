@@ -191,7 +191,7 @@ api:
               required: true
               description: 주문 번호 (사용자에게 보이는 주문 번호)
             - name: orderId
-              type: string
+              type: number
               required: true
               description: 주문 ID (시스템 고유 식별자)
             - name: totalAmount

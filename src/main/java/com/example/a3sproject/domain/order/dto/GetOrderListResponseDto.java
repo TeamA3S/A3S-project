@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.order.dto;
 
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -18,7 +19,8 @@ public class GetOrderListResponseDto {
     private final Integer earnedPoints;  // 적립된 포인트
 
     private final String currency;           // 통화
-    private final OrderStatus orderStatus;   // 주문 상태
+    @JsonProperty("status")
+    private final String orderStatus;   // 주문 상태
     private final LocalDateTime createdAt;   // 주문 생성 시간
 
     // TODO: 결제 구현 후 적용
@@ -44,7 +46,7 @@ public class GetOrderListResponseDto {
         this.finalAmount = finalAmount;
         this.earnedPoints = earnedPoints;
         this.currency = currency;
-        this.orderStatus = orderStatus;
+        this.orderStatus = orderStatus.name();
         this.createdAt = createdAt;
     }
 
