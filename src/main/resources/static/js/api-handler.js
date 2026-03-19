@@ -108,8 +108,8 @@ async function makeApiRequest(endpointKey, options = {}) {
 
             // 객체 응답이면 래퍼의 success 상태를 병합
             if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
-                if (unwrapped.success === undefined && data.success !== undefined) {
-                    unwrapped.success = data.success;
+                if (unwrapped.success === undefined) {
+                    unwrapped.success = data.success ?? true;
                 }
             }
             return unwrapped;

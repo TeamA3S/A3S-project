@@ -50,7 +50,7 @@ api:
           fields:
             - name: success
               type: boolean
-              required: false
+              required: true
               description: 로그인 성공 여부
             - name: email
               type: string
