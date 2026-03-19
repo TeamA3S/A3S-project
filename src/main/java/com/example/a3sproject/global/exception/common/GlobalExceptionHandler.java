@@ -3,6 +3,7 @@ package com.example.a3sproject.global.exception.common;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -17,6 +18,7 @@ import com.example.a3sproject.global.dto.ApiResponseDto;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -122,6 +124,7 @@ public class GlobalExceptionHandler {
     // 500 - 그 외 모든 예외
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponseDto<Void>> handleException(Exception ex) {
+        log.error("서버 내부 오류", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseDto.error(
