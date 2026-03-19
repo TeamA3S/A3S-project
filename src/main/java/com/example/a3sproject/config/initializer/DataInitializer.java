@@ -4,9 +4,12 @@ import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductCategory;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
+import com.example.a3sproject.domain.user.entity.User;
+import com.example.a3sproject.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +20,25 @@ import java.util.List;
 public class DataInitializer implements ApplicationRunner {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) throws Exception {
+
+        // 어드민 계정 초기화
+        if (!userRepository.existsByEmail("admin@test.com")) {
+            User admin = new User(
+                    "관리자",
+                    "admin@test.com",
+                    passwordEncoder.encode("admin"),
+                    "010-0000-0000"
+            );
+            userRepository.save(admin);
+        }
+
+        // 상품 더미데이터 초기화
         if (productRepository.count() == 0) {
 
             Product p1 = Product.builder()
