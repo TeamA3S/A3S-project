@@ -13,5 +13,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // 결제 확정시 탐색
     Optional<Payment> findByOrder(Order order);
 
-    Optional<Payment> findByPaymentUuid(String paymentUuid);
+    Optional<Payment> findByportOneId(String portOneId);
 }

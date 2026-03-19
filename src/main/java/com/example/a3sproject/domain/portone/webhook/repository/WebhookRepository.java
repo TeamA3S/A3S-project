@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface WebhookRepository extends JpaRepository<Webhook, Integer> {
-    boolean existsByWebhookIdAndStatus(String webhookId, WebhookStatus Status);
+public interface WebhookRepository extends JpaRepository<Webhook, Long> {
+    boolean existsByWebhookUuidAndStatus(String webhookUuid, WebhookStatus Status);
 
-    Optional<Webhook> findByWebhookId(String webhookId);
+    Optional<Webhook> findByWebhookUuid(String webhookUuid);
 }

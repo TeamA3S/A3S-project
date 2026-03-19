@@ -7,10 +7,10 @@ import java.time.OffsetDateTime;
 public record PortOnePaymentResponse (
         String id,
         PortOnePayStatus status,
-        Amount amount,
+        PaymentAmount amount,
         OffsetDateTime paidAt
 ) {
-    public record Amount(
+    public record PaymentAmount(
             int total,
             int discount
     ) {}

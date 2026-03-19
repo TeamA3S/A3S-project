@@ -16,13 +16,13 @@ public class WebhookController {
 
     @PostMapping
     public ResponseEntity<Void> handleWebhook(
-            @RequestHeader("webhook-id") String webhookId,
+            @RequestHeader("webhook-id") String webhookUuid,
             @RequestBody WebhookRequest request
     ) {
         try {
-            webhookService.handleWebhook(webhookId, request.paymentId(), request.status());
+            webhookService.handleWebhook(webhookUuid, request.portOneId(), request.status());
         } catch (Exception e) {
-            log.error("웹훅 처리 실패 webhookId: {}, error: {}", webhookId, e.getMessage());
+            log.error("웹훅 처리 실패 webhookId: {}, error: {}", webhookUuid, e.getMessage());
             // 실패해도 200 OK 반환! (PortOne 재전송 방지)
         }
         return ResponseEntity.ok().build();

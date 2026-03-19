@@ -10,4 +10,7 @@ public record PaymentTryRequest(
         Integer totalAmount,
         Integer pointsToUse
 ) {
+        public int pointsToUseOrZero() {
+                return pointsToUse != null ? pointsToUse : 0;
+        }
 }
