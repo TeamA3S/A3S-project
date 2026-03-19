@@ -108,6 +108,17 @@ async function makeApiRequest(endpointKey, options = {}) {
             return unwrapped;
         }
 
+        if (data && data.data !== undefined) {
+            const unwrapped = data.data;
+
+            if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
+                if (unwrapped.success === undefined && data.success !== undefined) {
+                    unwrapped.success = data.success;
+                }
+            }
+            return unwrapped;
+        }
+
         return data;
     } catch (error) {
         displayError({
