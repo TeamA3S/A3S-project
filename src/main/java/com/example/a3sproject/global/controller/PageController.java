@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/api")
+@RequestMapping("/pages")
 public class PageController {
 
     @GetMapping("/shop")
@@ -38,12 +38,12 @@ public class PageController {
         return "subscriptions";
     }
 
-    @GetMapping("/auth/login")
+    @GetMapping("/login")
     public String login() {
         return "login";
     }
 
-    @GetMapping("/users/signup")
+    @GetMapping("/register")
     public String register() {
         return "register";
     }
