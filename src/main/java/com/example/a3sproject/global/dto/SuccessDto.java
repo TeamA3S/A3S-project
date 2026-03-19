@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 public class SuccessDto<T> implements ApiResponseDto<T> {
 
+    private final boolean success = true;
     private final int status;  // HttpStatus → int 변환
     private final T data;
 
