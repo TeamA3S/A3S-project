@@ -9,6 +9,7 @@ import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -29,6 +30,7 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     @Transactional
+    @Builder
     public void run(ApplicationArguments args) throws Exception {
 
         // 어드민 계정 초기화
