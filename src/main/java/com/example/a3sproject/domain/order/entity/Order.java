@@ -42,7 +42,9 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    private int usedPointAmount;   // 사용 포인트
+    @Column(nullable = false)
+    private int usedPointAmount;    // 사용 포인트
+    @Column(nullable = false)
     private int finalAmount;       // 최종 결제 금액
 
 

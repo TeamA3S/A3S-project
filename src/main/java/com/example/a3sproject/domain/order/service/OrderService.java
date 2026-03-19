@@ -164,7 +164,7 @@ public class OrderService {
 
     // 주문 상세 조회
     public GetOrderDetailResponseDto getOrderDetail(Long userId, Long orderId) {
-        Order order = orderRepository.findByIdAndUserId(orderId, userId).orElseThrow(
+        Order order = orderRepository.findByIdAndUser_Id(orderId, userId).orElseThrow(
                 () -> new OrderException(ErrorCode.ORDER_NOT_FOUND)
         );
         return GetOrderDetailResponseDto.of(order);
