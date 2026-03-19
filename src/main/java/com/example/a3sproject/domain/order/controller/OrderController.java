@@ -8,6 +8,7 @@ import com.example.a3sproject.domain.order.service.OrderService;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class OrderController {
     @PostMapping("/orders")
     public ResponseEntity<ApiResponseDto<CreateOrderResponseDto>> createOrder(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody CreateOrderRequestDto requestDto
+            @Valid @RequestBody CreateOrderRequestDto requestDto
     ) {
         CreateOrderResponseDto response = orderService.createOrder(userDetails.getId(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED)

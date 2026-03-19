@@ -3,6 +3,7 @@ package com.example.a3sproject.domain.order.entity;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.global.entity.BaseEntity;
 import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.OrderException;
 import com.example.a3sproject.global.exception.domain.ProductException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,10 +52,10 @@ public class OrderItem extends BaseEntity {
 
     public static OrderItem createOrderItem(Product product, int quantity) {
         if (product == null) {
-            throw new ProductException(ErrorCode.PRODUCT_NOT_FOUND);
+            throw new OrderException(ErrorCode.PRODUCT_NOT_FOUND);
         }
         if (quantity <= 0) {
-            throw new ProductException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+            throw new OrderException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
         return new OrderItem(product, quantity);
     }
