@@ -38,7 +38,11 @@ public class AuthController {
                 .header("Authorization", "Bearer " + tokens.accessToken())
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
-                        new LoginResponseDto(tokens.refreshToken(), tokens.email())
+                        LoginResponseDto.builder()
+                                .success(true)
+                                .refreshToken(tokens.refreshToken())
+                                .email(tokens.email())
+                                .build()
                 ));
     }
 
@@ -56,7 +60,11 @@ public class AuthController {
                 .header("Authorization", "Bearer " + tokens.accessToken())
                 .body(ApiResponseDto.success(
                         HttpStatus.OK,
-                        new LoginResponseDto(tokens.refreshToken(), tokens.email())
+                        LoginResponseDto.builder()
+                                .success(true)
+                                .refreshToken(tokens.refreshToken())
+                                .email(tokens.email())
+                                .build()
                 ));
     }
 
