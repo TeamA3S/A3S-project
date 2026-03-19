@@ -1,5 +1,6 @@
 package com.example.a3sproject.domain.product.service;
 
+import com.example.a3sproject.domain.order.dto.GetOrderListResponseDto;
 import com.example.a3sproject.domain.product.dto.GetAllProductsResponseDto;
 import com.example.a3sproject.domain.product.dto.GetOneProductResponseDto;
 import com.example.a3sproject.domain.product.entity.Product;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,13 +25,15 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     // 상품 목록 조회
-    public Page<GetAllProductsResponseDto> getAllProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findAllByProductStatus(ProductStatus.ON_SALE, pageable)
-                .map(product ->
-                        new GetAllProductsResponseDto(
-                                product.getId(), product.getName(), product.getPrice(), product.getStock())
-                );
+    public List<GetAllProductsResponseDto> getAllProducts() {
+        return productRepository.findAllByProductStatus(ProductStatus.ON_SALE)
+                .stream()
+                .map(product -> new GetAllProductsResponseDto(
+                        product.getId(),
+                        product.getName(),
+                        product.getPrice(),
+                        product.getStock()
+                )).toList();
     }
 
     // 상품 단건 조회

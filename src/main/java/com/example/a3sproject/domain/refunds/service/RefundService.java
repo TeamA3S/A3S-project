@@ -32,7 +32,6 @@ public class RefundService {
 
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
         // portOneId로 Payment 조회
-        // TODO: 조회 메서드명 수정 필요
         Payment payment = paymentRepository.findByportOneId(portOneId).orElseThrow(
                 () -> new RefundException(ErrorCode.PAYMENT_NOT_FOUND)
         );
@@ -51,10 +50,11 @@ public class RefundService {
                     portOneClient.cancelPayment(portOneId, new PortOneCancelPaymentRequest(requestDto.getReason()));
 
             // 성공 이력 저장
-
+            refundRecordService.saveSuccessRefund(payment, requestDto.getReason(), portOneCancelPaymentResponse.cancelledAt());
 
             // 결제상태 환불완료로 변경
             payment.refundStatus(portOneCancelPaymentResponse.cancelledAt());
+            // 주문상태 환불완료로 변경
             order.markRefunded();
 
             // 재고 복구
