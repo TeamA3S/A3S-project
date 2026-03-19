@@ -21,11 +21,8 @@ public class ProductController {
 
     // 상품 목록 조회
     @GetMapping("/products")
-    public ResponseEntity<ApiResponseDto<Page<GetAllProductsResponseDto>>> getAllProducts(
-            @RequestParam(required = false, defaultValue = "1") int page,
-            @RequestParam(required = false, defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, productService.getAllProducts(page - 1, size)));
+    public ResponseEntity<ApiResponseDto<List<GetAllProductsResponseDto>>> getAllProducts() {
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, productService.getAllProducts()));
     }
 
     // 상품 단건 조회
