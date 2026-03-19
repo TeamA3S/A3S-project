@@ -20,12 +20,13 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/orders")
 public class OrderController {
 
     private final OrderService orderService;
 
     // 주문 생성
-    @PostMapping("/orders")
+    @PostMapping
     public ResponseEntity<ApiResponseDto<CreateOrderResponseDto>> createOrder(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody CreateOrderRequestDto requestDto
@@ -36,7 +37,7 @@ public class OrderController {
     }
 
     // 주문 목록 조회
-    @GetMapping("/orders")
+    @GetMapping
     public ResponseEntity<ApiResponseDto<List<GetOrderListResponseDto>>> getAllOrderList(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -46,7 +47,7 @@ public class OrderController {
 
     // 주문 상세 조회
     // TODO: 야물 생성하고 id로 할 지 uuid로 할지 결정
-    @GetMapping("/orders/{orderId}")
+    @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponseDto<GetOrderDetailResponseDto>> getOrderDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long orderId
