@@ -20,7 +20,7 @@
 #    클라이언트는 방법 2, 3을 사용하면 수정 불필요!
 
 api:
-  base-url: http://localhost:8080
+  base-url: https://a3s.click
 
   # API 엔드포인트 및 계약 정의
   endpoints:
@@ -62,8 +62,8 @@ api:
               description: 로그인한 사용자에게 발급된 리프레시토큰
 
     register:
-      url:
-      method:
+      url: /api/users/signUp
+      method: POST
       description: 회원가입
       request:
         fields:
@@ -92,8 +92,8 @@ api:
               description: 에러 메시지 (실패 시)
 
     get-current-user:
-      url:
-      method:
+      url: /api/users/me
+      method: GET
       description: 현재 로그인한 사용자 정보 조회
       response:
         body:
@@ -127,12 +127,12 @@ api:
     # 상품 & 주문 (Product & Order)
     # ========================================
     list-products:
-      url: /products
+      url: /api/products
       method: GET
       description: 상품 목록 조회
       response:
         body:
-          type: object
+          type: array # 프론트 엔드가 배열인지 채크
           items:
             - name: id
               type: string
@@ -152,7 +152,7 @@ api:
               description: 재고 수량
 
     create-order:
-      url: /orders
+      url: /api/orders
       method: POST
       description: 주문 생성 (총 금액은 서버에서 계산)
       request:
@@ -179,7 +179,7 @@ api:
               description: 생성된 주문 번호
 
     list-orders:
-      url: /orders
+      url: /api/orders
       method: GET
       description: 주문 목록 조회 (현재 로그인한 사용자의 주문)
       response:
@@ -227,8 +227,8 @@ api:
     # 결제 (Payment)
     # ========================================
     create-payment:
-      url:
-      method:
+      url: /api/payments
+      method: POST
       description: 결제 시작 요청 (DB에 PENDING 상태로 등록, PortOne SDK 호출 전에 먼저 호출)
       request:
         fields:
@@ -251,7 +251,7 @@ api:
               type: boolean
               required: true
               description: 생성 성공 여부
-            - name: paymentId
+            - name: paymentId #프론트엔드랑 필드명이 안 맞아서 연동이 안됨.
               type: string
               required: true
               description: 생성된 결제 ID (PortOne SDK에 전달할 ID)
@@ -261,8 +261,8 @@ api:
               description: 결제 상태 (PENDING)
 
     confirm-payment:
-      url:
-      method:
+      url: /api/payments/{paymentId}/confirm
+      method: POST
       description: 결제 확정 (PortOne 결제 검증 및 주문 상태 업데이트)
       pathParams:
         - name:
@@ -274,7 +274,7 @@ api:
               type: boolean
               required: true
               description: 확정 성공 여부
-            - name: orderId
+            - name: orderNumber
               type: string
               required: false
               description: 주문 ID
@@ -303,7 +303,7 @@ api:
               type: boolean
               required: true
               description: 취소 성공 여부
-            - name: orderId
+            - name: orderNumber
               type: string
               required: false
               description: 주문 ID
