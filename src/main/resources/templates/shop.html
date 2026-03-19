@@ -216,14 +216,10 @@
             let total = 0;
             let html = '';
 
-            console.log("cart !!!!!!!!!!!!!!!!!!!!!!! cart !!!!!!!!!!!!!!!!!!!!!!!", cart);
             Object.keys(cart).forEach(productId => { // {1:8} Map => (1,8) k,v
                 const qty = cart[productId]; // qty=8
                 if (qty > 0) {
-                    console.log("productId !!!!!!!!!!!!!!!!!!!!!!! productId !!!!!!!!!!!!!!!!!!!!!!!", productId);
-                    console.log("products !!!!!!!!!!!!!!!!!!!!!!! products !!!!!!!!!!!!!!!!!!!!!!!", products);
                     const product = products.find(p => p.productId == productId);
-                    console.log("product !!!!!!!!!!!!!!!!!!!!!!! product !!!!!!!!!!!!!!!!!!!!!!!", product); // null
                     const subtotal = product.price * qty;
                     total += subtotal;
                     html += `

@@ -1,5 +1,6 @@
 package com.example.a3sproject.domain.order.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import java.util.List;
 @Getter
 public class CreateOrderRequestDto {
 
+    @JsonProperty("items")
     @NotEmpty(message = "주문 상품은 1개 이상이어야 합니다.")
     @Valid
     private List<OrderItemRequestDto> orderItems;
