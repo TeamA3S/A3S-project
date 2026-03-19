@@ -170,5 +170,19 @@ public class OrderService {
         return GetOrderDetailResponseDto.of(order);
     }
 
+    // 주문 이름 생성 메서드
+    public String buildOrderName(Order order) {
+        if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+            return "주문";
+        }
+
+        String firstItemName = order.getOrderItems().get(0).getProductName();
+        int itemCount = order.getOrderItems().size();
+
+        if (itemCount == 1) {
+            return firstItemName;
+        }
+        return firstItemName + " 외 " + (itemCount - 1) + "건";
+    }
 
 }

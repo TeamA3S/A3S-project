@@ -77,12 +77,12 @@ public class Payment extends BaseEntity {
     }
 
     // 결제 실패 시점 → 상태만 변경
-    public void failPayment() {
+    public void failStatus() {
         this.paidStatus = PaidStatus.FAILED;
     }
 
     // 환불 완료 시점 → 상태만 변경
-    public void refundPayment(OffsetDateTime refundedAt) {
+    public void refundStatus(OffsetDateTime refundedAt) {
         this.paidStatus = PaidStatus.REFUNDED;
         this.refundedAt = refundedAt;
     }

@@ -7,7 +7,7 @@ public record PaymentTryRequest(
         @NotNull
         long orderId,
         @NotNull @Positive
-        Integer paidAmount,
+        Integer totalAmount,
         Integer pointsToUse
 ) {
 }

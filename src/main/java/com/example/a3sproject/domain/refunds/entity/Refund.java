@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.OffsetDateTime;
+
 @Getter
 @Entity
 @Table(name = "refunds",
@@ -28,10 +30,13 @@ public class Refund extends BaseEntity {
     private Payment payment;
 
     private int refundAmount;
+
     private String refundReason;
+
     @Enumerated(EnumType.STRING)
     private RefundStatus refundStatus;
-    // 환불 처리 시각
+
+    private OffsetDateTime refundedAt;
 
     public Refund(Payment payment, String refundReason) {
         this.payment = payment;
@@ -41,8 +46,9 @@ public class Refund extends BaseEntity {
     }
 
     // 환불 완료 상태 변경
-    public void completeRefund() {
+    public void completeRefund(OffsetDateTime refundedAt) {
         this.refundStatus = RefundStatus.COMPLETED;
+        this.refundedAt = refundedAt;
     }
 
     // 환불 실패 상태 변경
