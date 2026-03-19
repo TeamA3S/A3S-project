@@ -75,6 +75,7 @@ public class PaymentService {
             throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
         int actualPayAmount = payableAmount - pointsForUse; // 클라이언트가 받아서 포트원에 요청할 실 결제 금액
+
         Payment payment = paymentRepository.findByOrder(order) // 해당 결제와 관련된 주문이 이미 있는 지 확인
                 .map(existing -> {  // 있다면 map 순회
                     if (existing.isFinalized()) {  // 이미 끝난 결제라면 에러
