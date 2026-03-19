@@ -44,6 +44,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private Integer totalPaymentAmount;
 
+    @Column(nullable = false)
+    private MembershipGrade membershipGrade;
+
     // 회원가입용 생성자
     public User(String name, String email, String password, String phoneNumber) {
         this.name = name;
@@ -52,6 +55,7 @@ public class User extends BaseEntity {
         this.phoneNumber = phoneNumber;
         this.pointBalance = 0;
         this.totalPaymentAmount = 0;
+        this.membershipGrade = MembershipGrade.NORMAL;
     }
 
     // 총 결제 금액 업데이트
