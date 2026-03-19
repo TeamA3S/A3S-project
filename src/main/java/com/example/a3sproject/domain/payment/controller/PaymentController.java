@@ -30,12 +30,12 @@ public class PaymentController {
                 .body(ApiResponseDto.success(HttpStatus.CREATED, response));
     }
 
-    @PostMapping("/{portOneId}/confirm") // 결제 확정 API
+    @PostMapping("/{paymentId}/confirm") // 결제 확정 API // 혹시 몰라서 paymentId로
     public ResponseEntity<ApiResponseDto<PaymentConfirmResponse>> confirmPayment(
-            @PathVariable String portOneId,
+            @PathVariable String paymentId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        PaymentConfirmResponse response = paymentService.confirmPayment(portOneId, userDetails.getId());
+        PaymentConfirmResponse response = paymentService.confirmPayment(paymentId, userDetails.getId());
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
