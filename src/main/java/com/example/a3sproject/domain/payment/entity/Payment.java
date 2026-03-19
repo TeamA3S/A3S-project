@@ -29,7 +29,7 @@ public class Payment extends BaseEntity {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column(name = "payment_uuid", nullable = false, unique = true, updatable = false)
+    @Column(name = "portOne_id", nullable = false, unique = true, updatable = false)
     private String portOneId;
 
     @Column(nullable = false)
