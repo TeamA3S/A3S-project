@@ -33,7 +33,7 @@ public class RefundService {
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
         // portOneId로 Payment 조회
         // TODO: 조회 메서드명 수정 필요
-        Payment payment = paymentRepository.findByPaymentUuid(portOneId).orElseThrow(
+        Payment payment = paymentRepository.findByportOneId(portOneId).orElseThrow(
                 () -> new RefundException(ErrorCode.PAYMENT_NOT_FOUND)
         );
         // 본인 주문인지 확인
