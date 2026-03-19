@@ -20,7 +20,7 @@ public class GetOrderListResponseDto {
 
     private final String currency;           // 통화
     @JsonProperty("status")
-    private final String orderStatus;   // 주문 상태
+    private final OrderStatus orderStatus;   // 주문 상태
     private final LocalDateTime createdAt;   // 주문 생성 시간
 
     // TODO: 결제 구현 후 적용
@@ -46,7 +46,7 @@ public class GetOrderListResponseDto {
         this.finalAmount = finalAmount;
         this.earnedPoints = earnedPoints;
         this.currency = currency;
-        this.orderStatus = orderStatus.name();
+        this.orderStatus = orderStatus;
         this.createdAt = createdAt;
     }
 
