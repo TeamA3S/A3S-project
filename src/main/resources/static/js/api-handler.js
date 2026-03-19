@@ -88,8 +88,10 @@ async function makeApiRequest(endpointKey, options = {}) {
 
         // returnHeaders 옵션이 true면 헤더도 함께 반환
         if (returnHeaders) {
+            // 언래핑 처리 추가
+            const unwrapped = (data && data.data !== undefined) ? data.data : data;
             return {
-                data,
+                data: unwrapped,
                 headers: Object.fromEntries(response.headers.entries())
             };
         }
@@ -100,17 +102,6 @@ async function makeApiRequest(endpointKey, options = {}) {
             const unwrapped = data.data;
 
             // 객체 응답이면 래퍼의 success 상태를 병합
-            if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
-                if (unwrapped.success === undefined && data.success !== undefined) {
-                    unwrapped.success = data.success;
-                }
-            }
-            return unwrapped;
-        }
-
-        if (data && data.data !== undefined) {
-            const unwrapped = data.data;
-
             if (unwrapped && typeof unwrapped === 'object' && !Array.isArray(unwrapped)) {
                 if (unwrapped.success === undefined && data.success !== undefined) {
                     unwrapped.success = data.success;
