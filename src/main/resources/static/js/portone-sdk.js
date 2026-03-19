@@ -127,7 +127,7 @@ async function openPortOnePaymentWithPoints(paymentData) {
 
         // 일반결제: KG 이니시스 채널 키 사용 (고정)
         const channelKeys = portoneConfig.channelKeys || {};
-        const channelKey = channelKeys['kg-inicis'];
+        const channelKey = channelKeys.toss;
 
         if (!channelKey) {
             throw new Error('kg-inicis 채널키가 설정되지 않았습니다.');
