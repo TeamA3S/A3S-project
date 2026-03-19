@@ -165,7 +165,7 @@ api:
         body:
           fields:
             - name: orderId
-              type: string
+              type: number
               required: true
               description: 생성된 주문 ID
               usage: 주문 페이지 리다이렉트에 사용
