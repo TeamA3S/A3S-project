@@ -14,7 +14,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     // 주문 상세조회시 본인 주문이 맞는지 검증을 위한 조회메서드
-    @EntityGraph(attributePaths = {"orderItems", "orderItems.product"})
+    @EntityGraph(attributePaths = {"orderItems", "orderItems.product", "user"})
     Optional<Order> findByIdAndUser_Id(Long orderId, Long userId);
 
     // 특정 유저의 특정 상태 주문 조회 (상태별 필터링 기능 대비)

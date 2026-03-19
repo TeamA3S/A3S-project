@@ -38,6 +38,8 @@ public enum ErrorCode {
 
     // Refund
     REFUND_NOT_FOUND(HttpStatus.NOT_FOUND, "환불 정보를 찾을 수 없습니다."),
+    USER_FORBIDDEN(HttpStatus.FORBIDDEN, "본인 주문이 아닙니다."),
+    ORDER_CANNOT_REFUND(HttpStatus.CONFLICT, "환불 가능한 상태가 아닙니다."),
     DUPLICATE_REFUND_REQUEST(HttpStatus.CONFLICT, "이미 처리된 환불 요청입니다."),
 
     // Product

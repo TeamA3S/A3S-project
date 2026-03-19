@@ -4,6 +4,7 @@ import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
 import com.example.a3sproject.domain.order.repository.OrderRepository;
+import com.example.a3sproject.domain.order.service.OrderService;
 import com.example.a3sproject.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.a3sproject.domain.payment.dto.request.PaymentTryRequest;
 import com.example.a3sproject.domain.payment.dto.response.PaymentConfirmResponse;
@@ -30,21 +31,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final PortOneClient portOneClient;
-
-    // 주문 이름 생성 메서드
-    private String buildOrderName(Order order) {
-        if (order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
-            return "주문";
-        }
-
-        String firstItemName = order.getOrderItems().get(0).getProductName();
-        int itemCount = order.getOrderItems().size();
-
-        if (itemCount == 1) {
-            return firstItemName;
-        }
-        return firstItemName + " 외 " + (itemCount - 1) + "건";
-    }
+    private final OrderService orderService;
 
     @Transactional // 결제 시도(생성) 메서드
     public PaymentTryResponse createPayment(Long userId, PaymentTryRequest request) {
@@ -56,16 +43,36 @@ public class PaymentService {
         if (order.getOrderStatus() != OrderStatus.PENDING) {
             throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
         }
-        // 지금 단계는 일반 카드 결제만 구현
-        if (request.pointsToUse() != null && request.pointsToUse() > 0) {
+        // 3. 사용 포인트 정규화
+        int pointsToUse = request.pointsToUse() == null ? 0 : request.pointsToUse();
+
+        if (pointsToUse < 0) {
             throw new PaymentException(ErrorCode.INVALID_INPUT);
         }
-        int payableAmount = order.getTotalAmount();
 
-        // 서버 계산 금액과 요청 금액 일치 검증
-        if (request.paidAmount() == null || request.paidAmount() != payableAmount) {
+        // 주문 총액보다 많이 쓰면 안 됨
+        if (pointsToUse > order.getTotalAmount()) {
+            throw new PaymentException(ErrorCode.INVALID_INPUT);
+        }
+
+        // 4. 현재 포인트 잔액 검증
+        // User에 pointBalance가 있다는 전제
+        int currentPointBalance = order.getUser().getPointBalance();
+
+        if (pointsToUse > currentPointBalance) {
+            throw new PaymentException(ErrorCode.POINT_NOT_ENOUGH);
+        }
+        // 5. 최종 결제 금액 계산
+        int finalPaidAmount = order.getTotalAmount() - pointsToUse;
+
+        // 클라이언트가 보낸 금액은 신뢰하지 않고 서버 계산값과 비교
+        if (request.totalAmount() != finalPaidAmount) {
             throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
+        // 6. 주문 스냅샷 갱신
+        // 일반 결제면 usedPointAmount=0, finalAmount=totalAmount
+        // 복합 결제면 usedPointAmount>0, finalAmount=totalAmount-usedPointAmount
+        order.applyPointUsage(pointsToUse);
 
         Payment payment = paymentRepository.findByOrder(order) // 해당 결제와 관련된 주문이 이미 있는 지 확인
                 .map(existing -> {  // 있다면 map 순회
@@ -73,20 +80,20 @@ public class PaymentService {
                         throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
                     }
                     // 아니라면 다시 결제 시도 가능한 상태로 덮어쓰기
-                    existing.preparePendingAttempt(payableAmount);
+                    existing.preparePendingAttempt(finalPaidAmount);
                     return existing;
                 })
                 // 없다면 새로운 결제 만들기
                 .orElseGet(() -> new Payment(
                         order,
-                        payableAmount,
+                        finalPaidAmount,
                         GenerateCodeUuid.generateCodeUuid("PMN")
                 ));
         Payment savedPayment = paymentRepository.save(payment);
 
         return new PaymentTryResponse(
                 savedPayment.getPaymentUuid(),
-                buildOrderName(order),
+                orderService.buildOrderName(order),
                 savedPayment.getPaidAmount(),
                 "KRW"
         );

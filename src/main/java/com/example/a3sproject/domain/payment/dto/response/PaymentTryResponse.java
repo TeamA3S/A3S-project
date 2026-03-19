@@ -3,7 +3,7 @@ package com.example.a3sproject.domain.payment.dto.response;
 public record PaymentTryResponse(
         String payUuid,
         String orderName,
-        int paidAmount,
+        int totalAmount,
         String currency
 ) {
 }

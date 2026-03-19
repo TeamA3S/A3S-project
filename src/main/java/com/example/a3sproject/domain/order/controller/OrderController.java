@@ -45,6 +45,7 @@ public class OrderController {
     }
 
     // 주문 상세 조회
+    // TODO: 야물 생성하고 id로 할 지 uuid로 할지 결정
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<ApiResponseDto<GetOrderDetailResponseDto>> getOrderDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,

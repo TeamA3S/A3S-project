@@ -74,6 +74,7 @@ public class Order extends BaseEntity {
         Order order = new Order(user, orderNumber);
         orderItems.forEach(order::addOrderItem);
         order.totalAmount = order.calculateTotalAmount();
+        order.finalAmount = order.totalAmount; // 기본은 포인트 미사용
         return order;
     }
 
