@@ -27,18 +27,18 @@ spring:
         format_sql: true
 
 jwt:
-  secret: ${LOCAL_JWT_SECRET}
-  token-validity-in-seconds: ${LOCAL_JWT_VALIDITY}
-  refresh-token-validity-in-seconds: ${LOCAL_JWT_REFRESH_VALIDITY}
+  secret: ${JWT_SECRET:commercehub-secret-key-for-demo-please-change-this-in-production-environment}
+  token-validity-in-seconds: ${LOCAL_JWT_VALIDITY:36400}
+  refresh-token-validity-in-seconds: ${LOCAL_JWT_REFRESH_VALIDITY:804600}
 
 portone:
   api:
-    secret: ${LOCAL_PORTONE_API_SECRET}
+    secret: ${LOCAL_PORTONE_API_SECRET:local-test-secret}
   store:
-    id: ${LOCAL_PORTONE_STORE_ID}
+    id: ${LOCAL_PORTONE_STORE_ID:local-test-store-id}
   channel:
-    kg-inicis: ${LOCAL_PORTONE_CHANNEL_KG}
-    toss: ${LOCAL_PORTONE_CHANNEL_TOSS}
+    kg-inicis: ${LOCAL_PORTONE_CHANNEL_KG:local-kg-channel-key}
+    toss: ${LOCAL_PORTONE_CHANNEL_TOSS:local-toss-channel-key}
 
 logging:
   level:

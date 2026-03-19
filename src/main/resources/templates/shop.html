@@ -173,15 +173,16 @@
 
                 return `
                     <div class="product-card">
+                    <div class="product-card">
                         <div class="card-header">${product.name}</div>
                         <div class="price">₩${product.price.toLocaleString()}</div>
                         <div style="margin: 0.5rem 0; font-size: 0.9rem;">${stockStatus}</div>
                         <div class="quantity-control">
-                            <button class="quantity-btn" onclick="updateQuantity('${product.productId}', -1)"
+                            <button class="quantity-btn" onclick="updateQuantity(${product.productId}, -1)"
                                 ${product.stock === 0 ? 'disabled' : ''}>-</button>
                             <input type="number" class="quantity-input" id="qty-${product.productId}"
                                 value="0" min="0" max="${product.stock}" readonly>
-                            <button class="quantity-btn" onclick="updateQuantity('${product.productId}', 1)"
+                            <button class="quantity-btn" onclick="updateQuantity(${product.productId}, 1)"
                                 ${product.stock === 0 ? 'disabled' : ''}>+</button>
                         </div>
                     </div>
@@ -190,7 +191,7 @@
         }
 
         function updateQuantity(productId, delta) {
-            const product = products.find(p => p.productId === productId);
+            const product = products.find(p => p.productId == productId);
             if (!product) return;
 
             const input = document.getElementById(`qty-${productId}`);
@@ -216,10 +217,14 @@
             let total = 0;
             let html = '';
 
-            Object.keys(cart).forEach(productId => {
-                const qty = cart[productId];
+            console.log("cart !!!!!!!!!!!!!!!!!!!!!!! cart !!!!!!!!!!!!!!!!!!!!!!!", cart);
+            Object.keys(cart).forEach(productId => { // {1:8} Map => (1,8) k,v
+                const qty = cart[productId]; // qty=8
                 if (qty > 0) {
-                    const product = products.find(p => p.productId === productId);
+                    console.log("productId !!!!!!!!!!!!!!!!!!!!!!! productId !!!!!!!!!!!!!!!!!!!!!!!", productId);
+                    console.log("products !!!!!!!!!!!!!!!!!!!!!!! products !!!!!!!!!!!!!!!!!!!!!!!", products);
+                    const product = products.find(p => p.productId == productId);
+                    console.log("product !!!!!!!!!!!!!!!!!!!!!!! product !!!!!!!!!!!!!!!!!!!!!!!", product); // null
                     const subtotal = product.price * qty;
                     total += subtotal;
                     html += `
