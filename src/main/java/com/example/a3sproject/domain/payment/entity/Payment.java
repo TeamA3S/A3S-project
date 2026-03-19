@@ -29,11 +29,12 @@ public class Payment extends BaseEntity {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    @Column
+    @Column(name = "payment_uuid", nullable = false, unique = true, updatable = false)
     private String portOneId;
 
     @Column(nullable = false)
     private int paidAmount;
+    private int pointsToUse;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -46,14 +47,13 @@ public class Payment extends BaseEntity {
     @Column
     private OffsetDateTime  refundedAt;
 
-    @Column(name = "payment_uuid", nullable = false, unique = true, updatable = false)
-    private String paymentUuid;
 
-    public Payment(Order order, int paidAmount, String paymentUuid) {
+    public Payment(Order order, int paidAmount, String portOneId, int pointsToUse) {
         this.order = order;
         this.paidAmount = paidAmount;
         this.paidStatus = PaidStatus.PENDING;
-        this.paymentUuid = paymentUuid;
+        this.portOneId = portOneId;
+        this.pointsToUse = pointsToUse;
     }
 
     // 기존 결제를 다시 결제 시도 가능한 상태로 덮어쓴다 (기록 재활용)
@@ -61,8 +61,7 @@ public class Payment extends BaseEntity {
         this.paidAmount = paidAmount;
         this.paidStatus = PaidStatus.PENDING;
         this.paidAt = null;
-        this.portOneId = null;
-    }
+    } // portOneId null 아니어도 됩니당
 
     // 이미 끝난 결제인지 확인
     public boolean isFinalized() {
@@ -70,8 +69,7 @@ public class Payment extends BaseEntity {
     }
 
     // 결제 확정 시점 → 세 값이 항상 함께 변경됨
-    public void confirmPayment(String portOneId, OffsetDateTime paidAt) {
-        this.portOneId = portOneId;
+    public void confirmPayment(OffsetDateTime paidAt) {
         this.paidAt = paidAt;
         this.paidStatus = PaidStatus.SUCCESS;
     }

@@ -32,11 +32,11 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
 
     // 결제 취소
     public PortOneCancelPaymentResponse cancelPayment(
-            String paymentUuid, PortOneCancelPaymentRequest cancelRequest
+            String portOneId, PortOneCancelPaymentRequest cancelRequest
     ){
         return portOneRestClient
                 .post()
-                .uri("/payments/{paymentId}/cancel", paymentUuid)
+                .uri("/payments/{paymentId}/cancel", portOneId)
                 .body(cancelRequest)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {

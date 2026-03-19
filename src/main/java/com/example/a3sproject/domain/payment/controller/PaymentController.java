@@ -1,6 +1,5 @@
 package com.example.a3sproject.domain.payment.controller;
 
-import com.example.a3sproject.domain.payment.dto.request.PaymentConfirmRequest;
 import com.example.a3sproject.domain.payment.dto.request.PaymentTryRequest;
 import com.example.a3sproject.domain.payment.dto.response.PaymentConfirmResponse;
 import com.example.a3sproject.domain.payment.dto.response.PaymentTryResponse;
@@ -31,14 +30,13 @@ public class PaymentController {
                 .body(ApiResponseDto.success(HttpStatus.CREATED, response));
     }
 
-    @PostMapping("/confirm") // 결제 확정 API - Todo : 일단은 해피패스만 완료
+    @PostMapping("/{portOneId}/confirm") // 결제 확정 API
     public ResponseEntity<ApiResponseDto<PaymentConfirmResponse>> confirmPayment(
-            @AuthenticationPrincipal CustomUserDetails userDetails, // Todo : 소유권 검증
-            @RequestBody PaymentConfirmRequest request
+            @PathVariable String portOneId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        PaymentConfirmResponse response = paymentService.confirmPayment(userDetails.getId(), request);
+        PaymentConfirmResponse response = paymentService.confirmPayment(portOneId, userDetails.getId());
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
-    // 웹훅수신
 }

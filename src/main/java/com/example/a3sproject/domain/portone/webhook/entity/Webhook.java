@@ -25,15 +25,15 @@ public class Webhook extends BaseEntity {
     private Long id;
 
     @Column(name = "webhook_id")
-    private String webhookId;
-    private String paymentUuid;
+    private String webhookUuid;
+    private String portOneId;
     private String eventStatus;
     @Enumerated(EnumType.STRING)
     private WebhookStatus status;
 
-    public Webhook(String webhookId, String paymentUuid, String eventStatus) {
-        this.webhookId = webhookId;
-        this.paymentUuid = paymentUuid;
+    public Webhook(String webhookUuid, String portOneId, String eventStatus) {
+        this.webhookUuid = webhookUuid;
+        this.portOneId = portOneId;
         this.eventStatus = eventStatus;
         this.status = WebhookStatus.RECEIVED;
     }

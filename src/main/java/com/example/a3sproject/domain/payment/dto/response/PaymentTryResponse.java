@@ -1,9 +1,11 @@
 package com.example.a3sproject.domain.payment.dto.response;
 
 public record PaymentTryResponse(
-        String payUuid,
+        boolean success,
+        String portOneId,
         String orderName,
-        int totalAmount,
-        String currency
+        int actualAmount,
+        String currency,
+        String status
 ) {
 }
