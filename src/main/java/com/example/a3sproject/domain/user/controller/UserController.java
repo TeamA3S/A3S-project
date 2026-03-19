@@ -43,5 +43,4 @@ public class UserController {
                 .status(HttpStatus.OK)
                 .body(ApiResponseDto.success(HttpStatus.OK, reponse));
     }
-
 }

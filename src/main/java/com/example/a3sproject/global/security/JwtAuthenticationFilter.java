@@ -1,5 +1,9 @@
 package com.example.a3sproject.global.security;
 
+import com.example.a3sproject.domain.user.entity.User;
+import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.UserException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -10,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -29,9 +34,11 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, UserRepository userRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -54,11 +61,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtTokenProvider.getEmail(token);
 
                 // 4. 인증 객체 생성
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+                CustomUserDetails userDetails = new CustomUserDetails(user);
+
                 UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
-                            email,
+                            userDetails,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                            userDetails.getAuthorities()
                     );
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

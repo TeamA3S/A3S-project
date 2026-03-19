@@ -7,6 +7,7 @@ import com.example.a3sproject.domain.user.dto.SignupUserResponse;
 import com.example.a3sproject.domain.user.dto.UserProfileResponseDto;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.UserException;
 import com.example.a3sproject.global.security.JwtTokenProvider;
@@ -35,12 +36,15 @@ public class UserService {
         // 2. 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.getUserPassword());
 
+        String customerUid = GenerateCodeUuid.generateUnderCodeUuid("CUST");
+
         // 3. User 저장
         User user = new User(
                 request.getUserName(),
                 request.getUserEmail(),
                 encodedPassword,
-                request.getUserPhoneNumber()
+                request.getUserPhoneNumber(),
+                customerUid
         );
         userRepository.save(user);
 
@@ -50,6 +54,7 @@ public class UserService {
 
         // 5. 응답 반환
         return new SignupUserResponse(
+                user.getCustomerUid(),
                 user.getId(),
                 user.getName(),
                 user.getEmail(),

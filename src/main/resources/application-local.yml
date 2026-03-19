@@ -27,7 +27,7 @@ spring:
         format_sql: true
 
 jwt:
-  secret: ${JWT_SECRET:commercehub-secret-key-for-demo-please-change-this-in-production-environment}
+  secret: ${JWT_SECRET:RDdtIftiz4WlWwwz9uOfQg7T76slo0LPHZ9x0tdgE3ITYveGOLLP6qNFLaz9bFFrukJgSKf2cswP1AFKwWjXmq}
   token-validity-in-seconds: ${LOCAL_JWT_VALIDITY:36400}
   refresh-token-validity-in-seconds: ${LOCAL_JWT_REFRESH_VALIDITY:804600}
 

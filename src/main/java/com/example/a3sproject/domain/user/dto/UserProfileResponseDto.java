@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class UserProfileResponseDto {
+    private final String customerUid;
     private final String name;
     private final String email;
     private final String phoneNumber;
@@ -18,6 +19,7 @@ public class UserProfileResponseDto {
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
                 .pointBalance(user.getPointBalance())
+                .customerUid(user.getCustomerUid())
                 .build();
     }
 }

@@ -48,8 +48,10 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private MembershipGrade membershipGrade;
 
+    private String customerUid;
+
     // 회원가입용 생성자
-    public User(String name, String email, String password, String phoneNumber) {
+    public User(String name, String email, String password, String phoneNumber, String customerUid) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -57,6 +59,7 @@ public class User extends BaseEntity {
         this.pointBalance = 0;
         this.totalPaymentAmount = 0;
         this.membershipGrade = MembershipGrade.NORMAL;
+        this.customerUid = customerUid;
     }
 
     // 총 결제 금액 업데이트

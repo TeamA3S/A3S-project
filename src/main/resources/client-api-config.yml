@@ -100,7 +100,7 @@ api:
           fields:
             - name: customerUid
               type: string
-              required: true
+              required: false
               description: PortOne 고객 고유 식별자 (서버에서 customerUid로 관리)
               usage: PortOne payment window customer.customerId
             - name: email
@@ -113,7 +113,7 @@ api:
               required: true
               description: 사용자 이름
               usage: PortOne payment window customer.fullName
-            - name: phone
+            - name: phoneNumber
               type: string
               required: true
               description: 사용자 전화번호 (KG 이니시스 필수)

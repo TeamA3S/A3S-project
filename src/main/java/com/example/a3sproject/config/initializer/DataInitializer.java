@@ -17,7 +17,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -39,7 +42,8 @@ public class DataInitializer implements ApplicationRunner {
                     "관리자",
                     "admin@test.com",
                     passwordEncoder.encode("admin"),
-                    "010-0000-0000"
+                    "010-0000-0000",
+                    "CUST_20260319_A1B2C3D4E5"
             );
             userRepository.save(admin);
 
