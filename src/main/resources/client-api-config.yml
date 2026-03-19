@@ -227,13 +227,13 @@ api:
     # 결제 (Payment)
     # ========================================
     create-payment:
-      url:  /api/payments
+      url:  /api/payments/attempt
       method: POST
       description: 결제 시작 요청 (DB에 PENDING 상태로 등록, PortOne SDK 호출 전에 먼저 호출)
       request:
         fields:
           - name: orderId
-            type: string
+            type: number
             required: true
             description: 주문 ID (서버에서 주문 정보 조회)
           - name: totalAmount
