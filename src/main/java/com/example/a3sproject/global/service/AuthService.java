@@ -54,6 +54,7 @@ public class AuthService {
 
         // 기존 토큰 삭제 추가
         refreshTokenRepository.deleteByEmail(user.getEmail());
+        refreshTokenRepository.flush();
 
         refreshTokenRepository.save(
                 new RefreshToken(
