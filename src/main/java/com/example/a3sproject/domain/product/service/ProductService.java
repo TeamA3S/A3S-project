@@ -25,15 +25,13 @@ public class ProductService {
     private final ProductRepository productRepository;
 
     // 상품 목록 조회
-    public List<GetAllProductsResponseDto> getAllProducts() {
-        return productRepository.findAllByProductStatus(ProductStatus.ON_SALE)
-                .stream()
-                .map(product -> new GetAllProductsResponseDto(
-                        product.getId(),
-                        product.getName(),
-                        product.getPrice(),
-                        product.getStock()
-                )).toList();
+    public Page<GetAllProductsResponseDto> getAllProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findAllByProductStatus(ProductStatus.ON_SALE, pageable)
+                .map(product ->
+                        new GetAllProductsResponseDto(
+                                product.getId(), product.getName(), product.getPrice(), product.getStock())
+                );
     }
 
     // 상품 단건 조회
