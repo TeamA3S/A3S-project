@@ -132,7 +132,7 @@ api:
       description: 상품 목록 조회
       response:
         body:
-          type: object
+          type: array
           items:
             - name: productId
               type: number
