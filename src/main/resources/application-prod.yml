@@ -37,5 +37,5 @@ portone:
 
 logging:
   level:
-    com.example.a3sproject: INFO
-    org.springframework.security: WARN
+    com.example.a3sproject: debug
+    org.springframework.security: debug
