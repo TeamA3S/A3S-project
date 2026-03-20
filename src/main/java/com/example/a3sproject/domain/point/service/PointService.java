@@ -7,6 +7,7 @@ import com.example.a3sproject.domain.point.repository.PointRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.RefundException;
 import com.example.a3sproject.global.exception.domain.UserException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -106,5 +107,28 @@ public class PointService {
         return transactions.stream()
                 .map(MyPointTransactionResponseDto::from)
                 .toList();
+    }
+
+    // 적립 포인트 취소 (환불 시 호출)
+    @Transactional
+    public void cancelEarnedPoint(Long userId, Long orderId, int amount) {
+
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+
+        // 적립된 포인트 차감
+        user.usePoint(amount);
+
+        // 포인트 거래 이력 기록
+        PointTransaction tx = PointTransaction.of(
+                userId,
+                orderId,
+                -amount,                // 차감이므로 음수
+                user.getPointBalance(), // 차감 후 잔액 스냅샷
+                PointTransactionType.CANCEL,
+                null
+        );
+        pointRepository.save(tx);
     }
 }

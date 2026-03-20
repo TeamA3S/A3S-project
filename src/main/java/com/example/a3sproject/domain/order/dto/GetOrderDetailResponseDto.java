@@ -3,6 +3,8 @@ package com.example.a3sproject.domain.order.dto;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
+import com.example.a3sproject.domain.payment.entity.Payment;
+import com.example.a3sproject.domain.payment.enums.PaidStatus;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -13,117 +15,66 @@ public class GetOrderDetailResponseDto {
 
     private final Long orderId;            // 주문 ID
     private final String orderNumber;      // 주문번호
-    private final int totalAmount;         // 주문 총액
+    private final int totalAmount;         // 주문 원금액
+    private final int usedPoints;          // 사용 포인트 스냅샷
+    private final int finalAmount;         // 포인트 반영 후 최종 결제 금액
+    private final int earnedPoints;        // 현재 유효한 적립 포인트
     private final String currency;         // 통화
     private final OrderStatus orderStatus; // 주문 상태
+    private final PaidStatus paymentStatus; // 결제 상태
+    private final Integer paidAmount;      // 실제 결제 금액 (결제 시도/완료 없으면 null)
     private final LocalDateTime createdAt; // 주문 생성 시간
     private final List<OrderItemDetailDto> orderItems;
-
-    /*
-    // ===== 결제/포인트 구현 후 활성화할 필드 =====
-    // 포인트 사용 후 최종 결제 금액, 적립 포인트, 결제 정보는
-    // 요구사항상 주문 상세 조회에 포함되어야 함
-    // private final Integer usedPoints;      // 사용 포인트
-    // private final Integer finalAmount;     // 포인트 반영 후 최종 결제 금액
-    // private final Integer earnedPoints;    // 적립 포인트
-    // private final String paymentStatus;    // 결제 상태
-    // private final String paymentMethod;    // 결제 수단
-    // private final Integer paidAmount;      // 실제 결제 금액
-    */
 
     private GetOrderDetailResponseDto(
             Long orderId,
             String orderNumber,
             int totalAmount,
+            int usedPoints,
+            int finalAmount,
+            int earnedPoints,
             String currency,
             OrderStatus orderStatus,
+            PaidStatus paymentStatus,
+            Integer paidAmount,
             LocalDateTime createdAt,
             List<OrderItemDetailDto> orderItems
-
-            /*
-            // ===== 결제/포인트 구현 후 constructor에 추가 =====
-            , Integer usedPoints
-            , Integer finalAmount
-            , Integer earnedPoints
-            , String paymentStatus
-            , String paymentMethod
-            , Integer paidAmount
-            */
     ) {
         this.orderId = orderId;
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
-        this.currency = currency;
-        this.orderStatus = orderStatus;
-        this.createdAt = createdAt;
-        this.orderItems = orderItems;
-
-        /*
-        // ===== 결제/포인트 구현 후 assignment 활성화 =====
         this.usedPoints = usedPoints;
         this.finalAmount = finalAmount;
         this.earnedPoints = earnedPoints;
+        this.currency = currency;
+        this.orderStatus = orderStatus;
         this.paymentStatus = paymentStatus;
-        this.paymentMethod = paymentMethod;
         this.paidAmount = paidAmount;
-        */
+        this.createdAt = createdAt;
+        this.orderItems = orderItems;
     }
 
-    public static GetOrderDetailResponseDto of(Order order) {
+    public static GetOrderDetailResponseDto of(Order order, int earnedPoints, Payment payment) {
         return new GetOrderDetailResponseDto(
                 order.getId(),
                 order.getOrderNumber(),
                 order.getTotalAmount(),
+                order.getUsedPointAmount(),
+                order.getFinalAmount(),
+                earnedPoints,
                 "KRW",
                 order.getOrderStatus(),
+                payment != null ? payment.getPaidStatus() : null,
+                payment != null ? payment.getPaidAmount() : null,
                 order.getCreatedAt(),
                 order.getOrderItems().stream()
                         .map(OrderItemDetailDto::new)
                         .toList()
-
-                /*
-                // ===== 결제/포인트 구현 후 인자 추가 =====
-                , usedPoints
-                , finalAmount
-                , earnedPoints
-                , paymentStatus
-                , paymentMethod
-                , paidAmount
-                */
         );
     }
-
-    /*
-    // ===== 결제/포인트 구현 후 사용할 확장 팩토리 메서드 =====
-    public static GetOrderDetailResponseDto of(
-            Order order,
-            Integer usedPoints,
-            Integer earnedPoints,
-            Payment payment
-    ) {
-        return new GetOrderDetailResponseDto(
-                order.getId(),
-                order.getOrderNumber(),
-                order.getTotalAmount(),
-                "KRW",
-                order.getOrderStatus(),
-                order.getCreatedAt(),
-                order.getOrderItems().stream()
-                        .map(OrderItemDetailDto::new)
-                        .toList(),
-                usedPoints,
-                order.getTotalAmount() - usedPoints, // finalAmount
-                earnedPoints,
-                payment != null ? payment.getPaymentStatus().name() : null,
-                payment != null ? payment.getPaymentMethod().name() : null,
-                payment != null ? payment.getAmount() : null
-        );
-    }
-    */
 
     @Getter
     public static class OrderItemDetailDto {
-
         private final Long orderItemId;
         private final Long productId;
         private final String productName;

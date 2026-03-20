@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/refunds")
+@RequestMapping("/api/refunds")
 public class RefundController {
     private final RefundService refundService;
 
@@ -25,7 +25,6 @@ public class RefundController {
             @RequestBody RefundRequestDto requestDto
     ) {
         RefundResponseDto response = refundService.refundPayment(userDetails.getId(), portOneId, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponseDto.success(HttpStatus.CREATED, response));
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.CREATED, response));
     }
 }

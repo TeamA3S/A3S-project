@@ -7,7 +7,7 @@ public record PaymentTryResponse(
         @JsonProperty("paymentId")
         String portOneId,
         String orderName,
-        int actualAmount,
+        int totalAmount,
         String currency,
         String status
 ) {

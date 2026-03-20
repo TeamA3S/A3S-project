@@ -29,11 +29,14 @@ public class Refund extends BaseEntity {
     @JoinColumn(name = "payment_id")
     private Payment payment;
 
+    @Column(nullable = false)
     private int refundAmount;
 
+    @Column(nullable = false)
     private String refundReason;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private RefundStatus refundStatus;
 
     private OffsetDateTime refundedAt;
