@@ -52,6 +52,15 @@ public class DataInitializer implements ApplicationRunner {
             membershipRepository.save(membership);
         }
 
+        // 테스트용 선달이
+        if(!userRepository.existsByEmail("abc@abc.com")) {
+            User user = new User("김선달", "abc@abc.com", "1234", "010-1234-5678",
+                    100000, 1000000, MembershipGrade.VVIP, "CUST_20260319_A1B2C3D4E6");
+            userRepository.save(user);
+            Membership init = Membership.init(user);
+            membershipRepository.save(init);
+        }
+
         // 상품 더미데이터 초기화
         if (productRepository.count() == 0) {
 

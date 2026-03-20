@@ -73,7 +73,7 @@ public class SecurityConfig {
                     // 4) 인증 API
                     .requestMatchers(HttpMethod.POST,
                             "/api/auth/login",
-                            "/api/auth/register",
+                            "/api/users/signUp",
                             "/api/auth/reissue"
                     ).permitAll()
 
