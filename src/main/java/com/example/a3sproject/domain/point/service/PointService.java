@@ -25,7 +25,7 @@ public class PointService {
 
     // 포인트 검증 및 차감
     @Transactional
-    public void validateAndUse(Long userId, int amount) {
+    public void validateAndUse(Long userId, Long orderId, int amount) {
 
         // 유저 조회
         User user = userRepository.findWithLockById(userId)
@@ -37,7 +37,7 @@ public class PointService {
         // 포인트 거래 이력 기록
         PointTransaction tx = PointTransaction.of(
                 userId,
-                null,              // 주문 ID는 결제 완료 후 연결
+                orderId,              // 주문 ID는 결제 완료 후 연결
                 -amount,                  // 차감이므로 음수
                 user.getPointBalance(),   // 차감 후 잔액 스냅샷
                 PointTransactionType.USE, // 만료일 없음

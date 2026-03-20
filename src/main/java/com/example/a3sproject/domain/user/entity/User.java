@@ -61,6 +61,18 @@ public class User extends BaseEntity {
         this.membershipGrade = MembershipGrade.NORMAL;
         this.customerUid = customerUid;
     }
+    // 더미용 생성자
+    public User(String name, String email, String password, String phoneNumber,
+                Integer pointBalance, Integer totalPaymentAmount, MembershipGrade membershipGrade, String customerUid) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.pointBalance = pointBalance;
+        this.totalPaymentAmount = totalPaymentAmount;
+        this.membershipGrade = membershipGrade;
+        this.customerUid = customerUid;
+    }
 
     // 총 결제 금액 업데이트
     public void updateTotalPaymentAmount(int amount) {
