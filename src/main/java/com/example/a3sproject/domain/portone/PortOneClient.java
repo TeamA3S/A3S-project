@@ -3,6 +3,7 @@ package com.example.a3sproject.domain.portone;
 import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentRequest;
 import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentResponse;
 import com.example.a3sproject.domain.portone.dto.PortOnePaymentResponse;
+import com.example.a3sproject.domain.portone.dto.ValidateBillingKeyResponse;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
 import org.springframework.beans.factory.annotation.Value;
@@ -64,5 +65,20 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 }) // 500번대 에러
                 .body(PortOneCancelPaymentResponse.class);
+    }
+
+    // billingKey 유효성 검증
+    public ValidateBillingKeyResponse getBillingKey(String billingKey) {
+        return portOneRestClient
+                .get()
+                .uri("/billing-keys/{billingKey}?storeId="+storeId, billingKey)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                    throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
+                })
+                .body(ValidateBillingKeyResponse.class);
     }
 }
