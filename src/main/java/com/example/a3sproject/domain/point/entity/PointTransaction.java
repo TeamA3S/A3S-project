@@ -42,6 +42,10 @@ public class PointTransaction extends BaseEntity {
     @Column(nullable = false)
     private PointTransactionType type;
 
+    // 거래 건당 잔여 포인트
+    @Column(nullable = false)
+    private int remainingPoints;
+
     // 만료일 (소멸 정책 적용 시)
     @Column
     private LocalDateTime expiredAt;
@@ -49,14 +53,22 @@ public class PointTransaction extends BaseEntity {
     // 정적 팩토리 메서드
     public static PointTransaction of(Long userId, Long orderId,
                                       int points,int pointBalance, PointTransactionType type,
-                                      LocalDateTime expiredAt) {
+                                      int remainingPoints, LocalDateTime expiredAt) {
         PointTransaction tx = new PointTransaction();
         tx.userId = userId;
         tx.orderId = orderId;
         tx.points = points;
         tx.pointBalance = pointBalance;
         tx.type = type;
+        tx.remainingPoints = remainingPoints;
         tx.expiredAt = expiredAt;
         return tx;
+    }
+
+    // remainingPoints 차감 메서드 (FIFO 사용 시)
+    public int deductRemaining(int amount) {
+        int deducted = Math.min(this.remainingPoints, amount);
+        this.remainingPoints -= deducted;
+        return deducted; // 실제로 차감된 양 반환
     }
 }
