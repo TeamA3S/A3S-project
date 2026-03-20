@@ -55,7 +55,7 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
     ){
         return portOneRestClient
                 .post()
-                .uri("/payments/{paymentId}/cancel", paymentId)
+                .uri("/payments/{paymentId}/cancel"+storeId, paymentId)
                 .body(cancelRequest)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
