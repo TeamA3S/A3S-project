@@ -19,7 +19,12 @@ public interface PointRepository extends JpaRepository<PointTransaction, Long> {
 
     List<PointTransaction> findByOrderId(Long orderId);
 
+    // 적립 포인트 조회
+    List<PointTransaction> findByOrderIdAndType(Long orderId, PointTransactionType type);
+
     List<PointTransaction> findByUserIdAndType(Long userId, PointTransactionType type);
 
     List<PointTransaction> findByUserIdAndExpiredAtBefore(Long userId, LocalDateTime expiredAtBefore);
+
+    List<PointTransaction> findByUserIdAndOrderIdAndTypeIn(Long userId, Long orderId, List<PointTransactionType> types);
 }

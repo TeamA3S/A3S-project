@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.order.dto;
 
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
+import com.example.a3sproject.domain.payment.entity.Payment;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
@@ -23,10 +24,8 @@ public class GetOrderListResponseDto {
     private final String orderStatus;   // 주문 상태
     private final LocalDateTime createdAt;   // 주문 생성 시간
 
-    // TODO: 결제 구현 후 적용
-//    private final String paymentStatus;    // 결제 상태 (추후 Payment 구현 후 반영)
-//    private final String paymentMethod;    // 결제 수단 (추후 반영)
-//    private final Integer paidAmount;      // 실제 결제 금액 (추후 반영)
+    private final String paymentStatus;    // 결제 상태 (추후 Payment 구현 후 반영)
+    private final Integer paidAmount;      // 실제 결제 금액 (추후 반영)
 
     public GetOrderListResponseDto(
             Long orderId,
@@ -37,7 +36,9 @@ public class GetOrderListResponseDto {
             Integer earnedPoints,
             String currency,
             OrderStatus orderStatus,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            String paymentStatus,
+            Integer paidAmount
     ) {
         this.orderId = orderId;
         this.orderNumber = orderNumber;
@@ -48,14 +49,16 @@ public class GetOrderListResponseDto {
         this.currency = currency;
         this.orderStatus = orderStatus.name();
         this.createdAt = createdAt;
+        this.paymentStatus = paymentStatus;
+        this.paidAmount = paidAmount;
     }
 
-    // TODO: 결제 파트 구현 후 실제 finalAmount로 교체필요!
     public static GetOrderListResponseDto of(
             Order order,
             Integer usedPoints,
             Integer finalAmount,
-            Integer earnedPoints
+            Integer earnedPoints,
+            Payment payment
     ) {
         return new GetOrderListResponseDto(
                 order.getId(),
@@ -66,7 +69,9 @@ public class GetOrderListResponseDto {
                 earnedPoints,
                 "KRW",
                 order.getOrderStatus(),
-                order.getCreatedAt()
+                order.getCreatedAt(),
+                payment != null ? payment.getPaidStatus().name() : null,
+                payment != null ? payment.getPaidAmount() : null
         );
     }
 

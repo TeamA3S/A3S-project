@@ -7,6 +7,10 @@ import com.example.a3sproject.domain.payment.entity.Payment;
 import com.example.a3sproject.domain.payment.enums.PaidStatus;
 import com.example.a3sproject.domain.payment.repository.PaymentRepository;
 import com.example.a3sproject.domain.payment.service.PaymentService;
+import com.example.a3sproject.domain.point.entity.PointTransaction;
+import com.example.a3sproject.domain.point.enums.PointTransactionType;
+import com.example.a3sproject.domain.point.repository.PointRepository;
+import com.example.a3sproject.domain.point.service.PointService;
 import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentRequest;
 import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentResponse;
@@ -19,7 +23,9 @@ import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.RefundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,7 +35,10 @@ public class RefundService {
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient;
     private final RefundRecordService refundRecordService;
+    private final PointService pointService;
+    private final PointRepository pointRepository;
 
+    @Transactional
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
         // portOneId로 Payment 조회
         Payment payment = paymentRepository.findByportOneId(portOneId).orElseThrow(
@@ -49,6 +58,29 @@ public class RefundService {
             PortOneCancelPaymentResponse portOneCancelPaymentResponse =
                     portOneClient.cancelPayment(portOneId, new PortOneCancelPaymentRequest(requestDto.getReason()));
 
+            // 사용한 포인트 복구
+            if (order.getUsedPointAmount() > 0) {
+                pointService.restorePoint(
+                        userId,
+                        order.getId(),
+                        order.getUsedPointAmount()
+                );
+            }
+            // 적립된 포인트 취소
+            List<PointTransaction> earnedTransactions =
+                    pointRepository.findByOrderIdAndType(order.getId(), PointTransactionType.EARN);
+
+            int totalEarned = earnedTransactions.stream()
+                    .mapToInt(PointTransaction::getPoints)
+                    .sum();
+
+            if (totalEarned > 0) {
+                pointService.cancelEarnedPoint(
+                        userId,
+                        order.getId(),
+                        totalEarned
+                );
+            }
             // 성공 이력 저장
             refundRecordService.saveSuccessRefund(payment, requestDto.getReason(), portOneCancelPaymentResponse.cancelledAt());
 
@@ -62,7 +94,7 @@ public class RefundService {
                 orderItem.getProduct().increaseStock(orderItem.getQuantity());
             }
             return RefundResponseDto.of(order);
-        } catch (PaymentException e) {
+        } catch (Exception e) {
             // 실패시 실패 이력 저장
             refundRecordService.saveFailRefund(payment, requestDto.getReason());
             throw e;

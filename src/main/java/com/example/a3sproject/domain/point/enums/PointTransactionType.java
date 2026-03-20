@@ -1,5 +1,10 @@
 package com.example.a3sproject.domain.point.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum PointTransactionType {
     EARN,    // 적립
     USE,     // 사용

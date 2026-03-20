@@ -265,7 +265,7 @@ api:
       method: POST
       description: 결제 확정 (PortOne 결제 검증 및 주문 상태 업데이트)
       pathParams:
-        - name: {paymentId}  # Todo : 확인 필요
+        - name: {paymentId}
           description: 결제 ID
       response:
         body:
@@ -284,11 +284,11 @@ api:
               description: 변경된 주문 상태
 
     cancel-payment:
-      url:
-      method:
+      url: /api/refunds/{portOneId}
+      method: POST
       description: 결제 취소/환불 (PortOne 결제 취소 및 주문 상태 업데이트)
       pathParams:
-        - name:
+        - name: {portOneId}
           description: 결제 ID
       request:
         fields:

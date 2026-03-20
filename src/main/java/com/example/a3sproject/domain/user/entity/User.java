@@ -65,6 +65,9 @@ public class User extends BaseEntity {
     // 총 결제 금액 업데이트
     public void updateTotalPaymentAmount(int amount) {
         this.totalPaymentAmount += amount;
+        if (this.totalPaymentAmount < 0) {
+            this.totalPaymentAmount = 0;
+        }
     }
 
     // 포인트 차감

@@ -7,6 +7,11 @@ import com.example.a3sproject.domain.order.dto.GetOrderListResponseDto;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.repository.OrderRepository;
+import com.example.a3sproject.domain.payment.entity.Payment;
+import com.example.a3sproject.domain.payment.repository.PaymentRepository;
+import com.example.a3sproject.domain.point.entity.PointTransaction;
+import com.example.a3sproject.domain.point.enums.PointTransactionType;
+import com.example.a3sproject.domain.point.repository.PointRepository;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
@@ -38,6 +43,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
+    private final PointRepository pointRepository;
 
     /**
      * 예) [요청]
@@ -155,12 +162,16 @@ public class OrderService {
     public List<GetOrderListResponseDto> getAllOrderList(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
-                .map(order -> GetOrderListResponseDto.of(
-                        order,
-                        null,
-                        order.getTotalAmount(),
-                        null
-                )).toList();
+                .map(order -> {
+                    Payment payment = paymentRepository.findByOrder(order).orElse(null);
+                    return GetOrderListResponseDto.of(
+                            order,
+                            order.getUsedPointAmount(),
+                            order.getFinalAmount(),
+                            null, // earnedPoints → 목록에서는 조회 생략
+                            payment
+                    );
+                }).toList();
     }
 
     // 주문 상세 조회
@@ -168,25 +179,20 @@ public class OrderService {
         Order order = orderRepository.findByIdAndUser_Id(orderId, userId).orElseThrow(
                 () -> new OrderException(ErrorCode.ORDER_NOT_FOUND)
         );
-        return GetOrderDetailResponseDto.of(order);
+        Payment payment = paymentRepository.findByOrder(order)
+                .orElse(null);
+
+        // 현재 유효한 적립 포인트 기준
+        List<PointTransaction> transactions = pointRepository.findByUserIdAndOrderIdAndTypeIn(
+                userId,
+                orderId,
+                List.of(PointTransactionType.EARN, PointTransactionType.CANCEL)
+        );
+
+        int earnedPoints = transactions.stream()
+                .mapToInt(PointTransaction::getPoints)
+                .sum();
+
+        return GetOrderDetailResponseDto.of(order, earnedPoints, payment);
     }
-
-    // 주문 이름 생성 메서드
-    public String buildOrderName(Order order) {
-        List<OrderItem> orderItems = order.getOrderItems();
-
-        // 주문상품이 없는데 주문이름 생성하려고 하면 에러
-        if (orderItems == null || orderItems.isEmpty()) {
-            throw new PaymentException(ErrorCode.INVALID_INPUT);
-        }
-
-        String firstItemName = order.getOrderItems().get(0).getProductName();
-        int itemCount = order.getOrderItems().size();
-
-        if (itemCount == 1) {
-            return firstItemName;
-        }
-        return firstItemName + " 외 " + (itemCount - 1) + "건";
-    }
-
 }
