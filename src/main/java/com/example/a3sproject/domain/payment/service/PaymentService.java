@@ -129,7 +129,7 @@ public class PaymentService {
         PaymentProcessResult result = null;
         Payment payment = null;
         try {
-            payment = paymentRepository.findByportOneId(portOneId).orElseThrow(
+            payment = paymentRepository.findByPortOneId(portOneId).orElseThrow(
                     () -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND)
             );
             if (userId != null) { // 소유권 검증, 웹훅은 검증 불필요
