@@ -68,7 +68,7 @@ public class PointExpireScheduler {
                     0,              // EXPIRE 타입은 remainingPoints = 0
                     null                         // EXPIRE 타입은 만료일 없음
             );
-            pointRepository.save(expiredTx);
+            pointRepository.save(expireTx);
 
             log.info("포인트 소멸 처리 완료 - userId: {}, amount: {}",
                     expiredTx.getUserId(), expireAmount);
