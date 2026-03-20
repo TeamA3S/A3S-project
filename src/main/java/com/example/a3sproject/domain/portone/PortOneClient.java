@@ -71,7 +71,7 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
     public ValidateBillingKeyResponse getBillingKey(String billingKey) {
         return portOneRestClient
                 .get()
-                .uri("/billing-keys/{billingKey}"+storeId, billingKey)
+                .uri("/billing-keys/{billingKey}?storeId="+storeId, billingKey)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
