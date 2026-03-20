@@ -27,4 +27,18 @@ public interface PointRepository extends JpaRepository<PointTransaction, Long> {
     List<PointTransaction> findByUserIdAndExpiredAtBefore(Long userId, LocalDateTime expiredAtBefore);
 
     List<PointTransaction> findByUserIdAndOrderIdAndTypeIn(Long userId, Long orderId, List<PointTransactionType> types);
+
+    // FIFO 조회 추가 (만료일 빠른 순서, remainingPoints > 0)
+    List<PointTransaction> findByUserIdAndTypeAndRemainingPointsGreaterThanOrderByExpiredAtAsc(
+            Long userId,
+            PointTransactionType type,
+            int remainingPoints
+    );
+
+    // 만료일 도래한 거래 조회 (스케줄러용)
+    List<PointTransaction> findByTypeAndExpiredAtBeforeAndRemainingPointsGreaterThan(
+            PointTransactionType type,
+            LocalDateTime now,
+            int remainingPoints
+    );
 }
