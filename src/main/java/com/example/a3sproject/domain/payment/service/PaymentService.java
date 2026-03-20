@@ -87,7 +87,7 @@ public class PaymentService {
         int finalPaidAmount = order.getTotalAmount() - pointsToUse;
 
         // 클라이언트가 보낸 금액은 신뢰하지 않고 서버 계산값과 비교
-        if (request.totalAmount() != finalPaidAmount) {
+        if (request.totalAmount() != order.getTotalAmount()) {
             throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
         // 6. 주문 스냅샷 갱신
