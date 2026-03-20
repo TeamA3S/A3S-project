@@ -3,6 +3,8 @@ package com.example.a3sproject.config.initializer;
 import com.example.a3sproject.domain.membership.entity.Membership;
 import com.example.a3sproject.domain.membership.enums.MembershipGrade;
 import com.example.a3sproject.domain.membership.repository.MembershipRepository;
+import com.example.a3sproject.domain.plan.entity.Plan;
+import com.example.a3sproject.domain.plan.repository.PlanRepository;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductCategory;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
@@ -30,6 +32,7 @@ public class DataInitializer implements ApplicationRunner {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PlanRepository planRepository;
 
     @Override
     @Transactional
@@ -59,6 +62,15 @@ public class DataInitializer implements ApplicationRunner {
             userRepository.save(user);
             Membership init = Membership.init(user);
             membershipRepository.save(init);
+        }
+
+        // 테스트용 플랜
+        if (planRepository.count() == 0) {
+            planRepository.saveAll(List.of(
+                    new Plan("BASIC", 9900, "MONTHLY",  true),
+                    new Plan("PRO", 19900, "MONTHLY",  true),
+                    new Plan("MAX", 29900, "MONTHLY",  true)
+            ));
         }
 
         // 상품 더미데이터 초기화
