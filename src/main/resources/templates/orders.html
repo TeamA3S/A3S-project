@@ -271,7 +271,7 @@
                 // 포인트 정보 구성
                 const usedPoints = order.usedPoints || 0;
                 const earnedPoints = order.earnedPoints || 0;
-                const finalAmount = order.finalAmount || order.totalAmount;
+                const finalAmount = order.finalAmount != null ? order.finalAmount : order.totalAmount;
 
                 let pointsDisplay = '';
                 if (usedPoints > 0 || earnedPoints > 0) {

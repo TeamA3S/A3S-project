@@ -54,7 +54,7 @@ public class DataInitializer implements ApplicationRunner {
 
         // 테스트용 선달이
         if(!userRepository.existsByEmail("abc@abc.com")) {
-            User user = new User("김선달", "abc@abc.com", "1234", "010-1234-5678",
+            User user = new User("김선달", "abc@abc.com", passwordEncoder.encode("1234"), "010-1234-5678",
                     100000, 1000000, MembershipGrade.VVIP, "CUST_20260319_A1B2C3D4E6");
             userRepository.save(user);
             Membership init = Membership.init(user);
