@@ -25,6 +25,6 @@ public class RefundController {
             @RequestBody RefundRequestDto requestDto
     ) {
         RefundResponseDto response = refundService.refundPayment(userDetails.getId(), portOneId, requestDto);
-        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.CREATED, response));
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 }

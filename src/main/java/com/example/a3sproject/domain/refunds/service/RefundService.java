@@ -41,7 +41,7 @@ public class RefundService {
     @Transactional
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
         // portOneId로 Payment 조회
-        Payment payment = paymentRepository.findByportOneId(portOneId).orElseThrow(
+        Payment payment = paymentRepository.findByPortOneId(portOneId).orElseThrow(
                 () -> new RefundException(ErrorCode.PAYMENT_NOT_FOUND)
         );
         // 본인 주문인지 확인

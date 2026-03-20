@@ -3,6 +3,7 @@ package com.example.a3sproject.domain.payment.repository;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.payment.entity.Payment;
 import com.example.a3sproject.domain.payment.enums.PaidStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -13,5 +14,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // 결제 확정시 탐색
     Optional<Payment> findByOrder(Order order);
 
-    Optional<Payment> findByportOneId(String portOneId);
+    @EntityGraph(attributePaths = {"order", "order.user", "order.orderItems", "order.orderItems.product"})
+    Optional<Payment> findByPortOneId(String portOneId);
 }
