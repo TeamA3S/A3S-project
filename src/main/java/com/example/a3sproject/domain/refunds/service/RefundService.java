@@ -1,5 +1,6 @@
 package com.example.a3sproject.domain.refunds.service;
 
+import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
@@ -37,6 +38,7 @@ public class RefundService {
     private final RefundRecordService refundRecordService;
     private final PointService pointService;
     private final PointRepository pointRepository;
+    private final PortOneProperties portOneProperties;
 
     @Transactional
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
@@ -56,7 +58,7 @@ public class RefundService {
         try {
             // portOne 환분 API 호출
             PortOneCancelPaymentResponse portOneCancelPaymentResponse =
-                    portOneClient.cancelPayment(portOneId, new PortOneCancelPaymentRequest(requestDto.getReason()));
+                    portOneClient.cancelPayment(portOneId, new PortOneCancelPaymentRequest(requestDto.getReason(), portOneProperties.getStore().getId()));
 
             // 사용한 포인트 복구
             if (order.getUsedPointAmount() > 0) {
@@ -82,10 +84,10 @@ public class RefundService {
                 );
             }
             // 성공 이력 저장
-            refundRecordService.saveSuccessRefund(payment, requestDto.getReason(), portOneCancelPaymentResponse.cancelledAt());
+            refundRecordService.saveSuccessRefund(payment, requestDto.getReason(), portOneCancelPaymentResponse.cancellation().cancelledAt());
 
             // 결제상태 환불완료로 변경
-            payment.refundStatus(portOneCancelPaymentResponse.cancelledAt());
+            payment.refundStatus(portOneCancelPaymentResponse.cancellation().cancelledAt());
             // 주문상태 환불완료로 변경
             order.markRefunded();
 

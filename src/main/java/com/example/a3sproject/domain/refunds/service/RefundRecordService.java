@@ -23,12 +23,20 @@ public class RefundRecordService {
         refund.completeRefund(refundedAt);
         refundRepository.save(refund);
     }
+
     // 환불 실패 기록 저장
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveFailRefund(Payment payment, String reason) {
-        Refund refund = new Refund(payment, reason);
-        refund.cancelRefund();
-        refundRepository.save(refund);
+        // 이미 존재하면 상태만 업데이트, 없으면 새로 INSERT
+        refundRepository.findByPayment(payment)
+                .ifPresentOrElse(
+                        existing -> existing.cancelRefund(),         // 이미 있으면 상태만 FAILED로
+                        () -> {
+                            Refund refund = new Refund(payment, reason);
+                            refund.cancelRefund();
+                            refundRepository.save(refund);           // 없으면 새로 저장
+                        }
+                );
     }
 
 }

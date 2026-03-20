@@ -79,6 +79,7 @@ public class SecurityConfig {
 
                     // 헬스체크 허용
                     .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/h2-console/**").permitAll()
 
                     // 5) 그 외 API는 인증 필요
                     .requestMatchers("/api/**").authenticated()

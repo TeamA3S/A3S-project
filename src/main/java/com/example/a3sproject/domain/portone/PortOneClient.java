@@ -5,12 +5,15 @@ import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentResponse;
 import com.example.a3sproject.domain.portone.dto.PortOnePaymentResponse;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 @Component
 public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
@@ -31,10 +34,10 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
                 .build();
     }
 
-    public PortOnePaymentResponse getPayment(String portOneId) {
+    public PortOnePaymentResponse getPayment(String paymentId) {
         return portOneRestClient
                 .get()
-                .uri("/payments/{paymentId}?storeId="+storeId, portOneId)
+                .uri("/payments/{paymentId}?storeId="+storeId, paymentId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
@@ -47,11 +50,11 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
 
     // 결제 취소
     public PortOneCancelPaymentResponse cancelPayment(
-            String portOneId, PortOneCancelPaymentRequest cancelRequest
+            String paymentId, PortOneCancelPaymentRequest cancelRequest
     ){
         return portOneRestClient
                 .post()
-                .uri("/payments/{paymentId}/cancel", portOneId)
+                .uri("/payments/{paymentId}/cancel", paymentId)
                 .body(cancelRequest)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {

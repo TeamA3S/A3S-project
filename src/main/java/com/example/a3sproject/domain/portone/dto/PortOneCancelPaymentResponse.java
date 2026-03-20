@@ -4,7 +4,13 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 public record PortOneCancelPaymentResponse(
-        String status,
-        int totalAmount,
-        OffsetDateTime cancelledAt
-) { }
+        Cancellation cancellation
+) {
+    public record Cancellation(
+            String status,
+            int totalAmount,
+            OffsetDateTime cancelledAt
+    ) {
+
+    }
+}
