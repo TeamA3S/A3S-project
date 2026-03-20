@@ -164,6 +164,16 @@ async function openPortOnePaymentWithPoints(paymentData) {
 
         // 포인트 차감 후 최종 금액 계산
         const finalAmount = Math.max(0, paymentData.totalAmount - pointsToUse);
+        // ✅ 전액 포인트 결제 처리 추가
+        if (finalAmount === 0) {
+            // 서버에서 이미 완료 처리됨
+            // PortOne SDK 호출 스킵하고 바로 반환
+            return {
+                paymentId: serverPaymentId,  // 서버에서 받은 ID 반환
+                pointsUsed: pointsToUse,
+                message: '포인트 전액 결제 완료'
+            };
+        }
         console.log(`포인트 차감: ${paymentData.totalAmount}원 - ${pointsToUse}P = ${finalAmount}원`);
 
         // 2단계: PortOne 결제창 열기

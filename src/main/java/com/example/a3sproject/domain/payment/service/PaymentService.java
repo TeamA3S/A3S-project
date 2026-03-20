@@ -190,6 +190,13 @@ public class PaymentService {
 
             result = processPaymentConfirm(payment, payment.getOrder(), portOneId, payment.getPointsToUse(), userId); // 핵심 로직 호출
             return new PaymentConfirmResponse(payment.getOrder().getOrderNumber(), "결제가 완료되었습니다.");
+        } catch (PaymentException e) {
+            // ✅ PAYMENT_AMOUNT_MISMATCH만 보상 트랜잭션 실행
+            if (e.getErrorCode() == ErrorCode.PAYMENT_AMOUNT_MISMATCH) {
+                paymentFailureHandler.handlePaymentFailure(payment, result, userId);
+            }
+            // 나머지 비즈니스 예외는 보상 트랜잭션 없이 그냥 던지기
+            throw e;
         } catch (Exception e) {
             // 보상 트랜잭션!
             paymentFailureHandler.handlePaymentFailure(payment, result, userId);
@@ -200,7 +207,7 @@ public class PaymentService {
     // 결제 확정 메서드 - 공유 핵심 로직
     private PaymentProcessResult processPaymentConfirm(Payment payment, Order order, String portOneId, int pointsToUse, long userId) {
         boolean portOneConfirmed = false;
-
+        PortOnePaymentResponse portOnePaymentResponse = null;
         // 1. 포인트 차감
         if (pointsToUse > 0) {
             pointService.validateAndUse(userId, order.getId(), pointsToUse);
@@ -209,11 +216,13 @@ public class PaymentService {
         if (paymentRepository.existsByPortOneIdAndPaidStatus(portOneId, PaidStatus.SUCCESS)) {
             throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
         }
-        // 3. PortOne 조회 API 호출
-        PortOnePaymentResponse portOnePaymentResponse = portOneClient.getPayment(portOneId);
-        // 4. PortOne 결제 상태 검증
-        if (PortOnePayStatus.PAID != portOnePaymentResponse.status()) {
-            throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
+        if(payment.getPaidAmount() !=0) {
+            // 3. PortOne 조회 API 호출
+            portOnePaymentResponse = portOneClient.getPayment(portOneId);
+            // 4. PortOne 결제 상태 검증
+            if (PortOnePayStatus.PAID != portOnePaymentResponse.status()) {
+                throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
+            }
         }
         // 5. 금액 검증
         if (portOnePaymentResponse.amount().total() != payment.getPaidAmount()) {
@@ -229,7 +238,9 @@ public class PaymentService {
         order.updateOrderStatus(OrderStatus.COMPLETED); // 주문 상태 성공으로 변경// PAID에서 COMPLETED로 수정
         paymentRepository.save(payment);
         // 8. 유저 총 결제금액 업데이트
-        User user = userRepository.findWithLockById(order.getUser().getId()).orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
+        User user = userRepository.findWithLockById(order.getUser().getId()).orElseThrow(
+                () -> new PaymentException(ErrorCode.USER_NOT_FOUND)
+        );
         user.updateTotalPaymentAmount(payment.getPaidAmount());
 
         Membership membership = membershipRepository.findWithLockByUser(user)
