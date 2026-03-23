@@ -440,11 +440,11 @@ api:
               description: 변경된 구독 상태
 
     create-billing:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: POST
       description: 즉시 결제 (현재 주기 청구 실행)
       pathParams:
-        - name:
+        - name: {subscriptionId}
           description: 구독 ID
       request:
         fields:

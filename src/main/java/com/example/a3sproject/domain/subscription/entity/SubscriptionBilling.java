@@ -4,7 +4,6 @@ import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatu
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -26,6 +25,10 @@ public class SubscriptionBilling extends BaseEntity {
     @Column(name = "subscription_billing_id")
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subscription_id")
+    private Subscription subscription;
+
     private String subscriptionUuid; // 구독 아이디
     private int amount; // 청구 금액
 
@@ -38,22 +41,14 @@ public class SubscriptionBilling extends BaseEntity {
     private OffsetDateTime periodEnd; //청구기간 종료일
     private String failureMessage; // 실패 메세지
 
-    @Builder
-    public SubscriptionBilling(
-            String subscriptionUuid,
-            int amount,
-            SubscriptionBillingStatus status,
-            String paymentId,
-            OffsetDateTime attemptDate,
-            OffsetDateTime periodStart,
-            OffsetDateTime periodEnd,
-            String failureMessage
-    ) {
-        this.subscriptionUuid = subscriptionUuid;
+    public SubscriptionBilling(Subscription subscription, int amount, SubscriptionBillingStatus status, String paymentId,
+                               OffsetDateTime attemptDate, OffsetDateTime periodStart, OffsetDateTime periodEnd, String failureMessage) {
+        this.subscription = subscription;
         this.amount = amount;
         this.status = status;
         this.paymentId = paymentId;
         this.attemptDate = attemptDate;
+        this.periodStart = periodStart;
         this.periodEnd = periodEnd;
         this.failureMessage = failureMessage;
     }

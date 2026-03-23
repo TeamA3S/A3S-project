@@ -4,11 +4,10 @@ import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.paymentMethod.repository.PaymentMethodRepository;
 import com.example.a3sproject.domain.portone.PortOneClient;
-import com.example.a3sproject.domain.portone.dto.PortOneBillingKeyPaymentRequest;
-import com.example.a3sproject.domain.portone.dto.PortOneBillingKeyPaymentResponse;
-import com.example.a3sproject.domain.portone.dto.ValidateBillingKeyResponse;
-import com.example.a3sproject.domain.portone.enums.PortOnePayStatus;
+import com.example.a3sproject.domain.portone.dto.*;
+import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
+import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.entity.Subscription;
@@ -21,9 +20,9 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
+import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.SubscriptionException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,11 +49,11 @@ public class SubscriptionService {
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
 
         // 검증 추가
-        if(!"ISSUED".equals(validateBillingKeyResponse.status())) {
+        if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
         // 중복 검증
-        if(subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
+        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
@@ -69,11 +68,11 @@ public class SubscriptionService {
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 소유권 검증
-        if(!subscription.getUser().getId().equals(userId)) {
+        if (!subscription.getUser().getId().equals(userId)) {
             throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
         }
 
-        PaymentMethod paymentMethod = paymentMethodRepository.findById(subscription.getPaymentMethodId()).orElseThrow(
+        PaymentMethod paymentMethod = paymentMethodRepository.findById(subscription.getPaymentMethod().getId()).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.PAYMENTMETHOD_NOT_FOUND)
         );
         return new GetSubscriptionResponse(
@@ -99,38 +98,38 @@ public class SubscriptionService {
         for (Subscription subscription : targets) {
             // 2. billingKey 조회
             PaymentMethod paymentMethod = paymentMethodRepository
-                    .findById(subscription.getPaymentMethodId())
+                    .findById(subscription.getPaymentMethod().getId())
                     .orElseThrow(() -> new SubscriptionException(ErrorCode.PAYMENTMETHOD_NOT_FOUND));
 
             // 3. paymentId 생성
             String paymentId = GenerateCodeUuid.generateCodeUuid("BIL");
 
             // 4. 요청 DTO 생성
-            PortOneBillingKeyPaymentRequest request = new PortOneBillingKeyPaymentRequest(
+            BillingKeyPaymentRequest request = new BillingKeyPaymentRequest(
                     portOneProperties.getStore().getId(),
                     paymentMethod.getBillingKey(),
                     subscription.getPlan().getName() + "플랜 정기결제",
-                    new PortOneBillingKeyPaymentRequest.Amount(subscription.getAmount()),
-                    new PortOneBillingKeyPaymentRequest.Customer(paymentMethod.getCustomerUid())
+                    new BillingKeyPaymentRequest.PaymentAmountInput(subscription.getAmount()),
+                    "KRW"
             );
 
             try {
                 // 5. PortOne API 호출
-                PortOneBillingKeyPaymentResponse response = portOneClient.payWithBillingKey(paymentId, request);
+                BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 6. 성공 시 처리
-                if (PortOnePayStatus.PAID == response.status()) {
+                if ("PAID".equals(response.getStatus())) {
                     // 6-1. 구독 청구 이력 저장
-                    SubscriptionBilling billing = SubscriptionBilling.builder()
-                            .subscriptionUuid(subscription.getSubscriptionUuid())
-                            .amount(subscription.getAmount())
-                            .status(SubscriptionBillingStatus.COMPLETED)
-                            .paymentId(paymentId)
-                            .attemptDate(response.paidAt())
-                            .periodStart(subscription.getCurrentPeriodEnd())
-                            .periodEnd(subscription.getCurrentPeriodEnd().plusMonths(1))
-                            .failureMessage(null)  // 성공이므로 null
-                            .build();
+                    SubscriptionBilling billing = new SubscriptionBilling(
+                            subscription,
+                            subscription.getAmount(),
+                            SubscriptionBillingStatus.COMPLETED,
+                            paymentId,
+                            response.getPaidAt(),
+                            subscription.getCurrentPeriodEnd(),
+                            subscription.getCurrentPeriodEnd().plusMonths(1),
+                            null
+                    );
                     subscriptionBillingRepository.save(billing);
 
                     // 6-2. 구독 기간 연장 및 상태 ACTIVE로 변경
@@ -142,21 +141,95 @@ public class SubscriptionService {
                         subscription.getSubscriptionUuid(), e.getMessage());
 
                 // 7. 실패 시 처리
-                SubscriptionBilling billing = SubscriptionBilling.builder()
-                        .subscriptionUuid(subscription.getSubscriptionUuid())
-                        .amount(subscription.getAmount())
-                        .status(SubscriptionBillingStatus.FAILED)
-                        .paymentId(null)
-                        .attemptDate(OffsetDateTime.now())
-                        .periodStart(subscription.getCurrentPeriodEnd())
-                        .periodEnd(subscription.getCurrentPeriodEnd().plusMonths(1))
-                        .failureMessage(e.getMessage()) // 실패시 메시지
-                        .build();
+                SubscriptionBilling billing = new SubscriptionBilling(
+                        subscription,
+                        subscription.getAmount(),
+                        SubscriptionBillingStatus.FAILED,
+                        null,
+                        OffsetDateTime.now(),
+                        subscription.getCurrentPeriodEnd(),
+                        subscription.getCurrentPeriodEnd().plusMonths(1),
+                        e.getMessage()
+                );
                 subscriptionBillingRepository.save(billing);
 
                 // 8. 구독 상태 PAST_DUE로 변경
                 subscription.markAsPastDue();
             }
+        }
+
+    }
+
+    // 수동 즉시 청구
+    public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
+        // 본인 구독인지 확인
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUserId(subscriptionId, userId).orElseThrow(
+                () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
+        );
+        // 빌링키 가져오기
+        String billingKey = subscription.getPaymentMethod().getBillingKey();
+
+        // 플랜 금액 가져오기;
+        int amount = subscription.getPlan().getAmount();
+
+        // 포트원에 빌링키 결제 API 호출
+        String paymentId = GenerateCodeUuid.generateCodeUuid("SUB");
+        BillingKeyPaymentRequest billingKeyPaymentRequest = new BillingKeyPaymentRequest(
+                portOneProperties.getStore().getId(),
+                billingKey,
+                subscription.getPlan().getName(),
+                new BillingKeyPaymentRequest.PaymentAmountInput(amount),
+                "KRW"
+        );
+        try {
+            // 결제 시도
+            BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
+
+            if (!"PAID".equals(response.getStatus())) {
+                throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
+            }
+            // 성공 시 구독 청구에 저장
+            SubscriptionBilling subscriptionBillingSuccess = new SubscriptionBilling(
+                    subscription,
+                    amount,
+                    SubscriptionBillingStatus.COMPLETED,
+                    paymentId,
+                    OffsetDateTime.now(),
+                    OffsetDateTime.parse(request.getPeriodStart()),
+                    OffsetDateTime.parse(request.getPeriodEnd()),
+                    null
+            );
+            SubscriptionBilling savedBilling = subscriptionBillingRepository.save(subscriptionBillingSuccess);
+
+            return new CreateBillingResponse(
+                    true,
+                    savedBilling.getId().toString(),
+                    paymentId,
+                    amount,
+                    SubscriptionBillingStatus.COMPLETED
+            );
+        } catch (PaymentException e) {
+            throw e;
+        } catch (Exception e) {
+            // 실패시 구독 청구에 저장
+            SubscriptionBilling subscriptionBillingFail = new SubscriptionBilling(
+                    subscription,
+                    amount,
+                    SubscriptionBillingStatus.FAILED,
+                    null,
+                    OffsetDateTime.now(),
+                    OffsetDateTime.parse(request.getPeriodStart()),
+                    OffsetDateTime.parse(request.getPeriodEnd()),
+                    e.getMessage()
+            );
+            subscriptionBillingRepository.save(subscriptionBillingFail);
+            return new CreateBillingResponse(
+                    false,
+                    null,
+                    null,
+                    amount,
+                    SubscriptionBillingStatus.FAILED
+            );
         }
     }
 

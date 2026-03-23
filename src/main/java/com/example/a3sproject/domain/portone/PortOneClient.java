@@ -79,23 +79,22 @@ public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직
                 .body(ValidateBillingKeyResponse.class);
     }
 
-    // billingkey 를 통한 결제
-    public PortOneBillingKeyPaymentResponse payWithBillingKey(
+    // billingKey로 결제(수동 즉시 청구)
+    public BillingKeyPaymentResponse billingKeyPayment(
             String paymentId,
-            PortOneBillingKeyPaymentRequest request
+            BillingKeyPaymentRequest billingRequest
     ) {
-        return portOneRestClient
+        return  portOneRestClient
                 .post()
                 .uri("/payments/{paymentId}/billing-key", paymentId)
-                .body(request)
+                .body(billingRequest)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (request1, response) -> {
+                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 })
-                .onStatus(HttpStatusCode::is5xxServerError, (request1, response) -> {
+                .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
                     throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 })
-                .body(PortOneBillingKeyPaymentResponse.class);
-
+                .body(BillingKeyPaymentResponse.class);
     }
 }
