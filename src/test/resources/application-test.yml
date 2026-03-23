@@ -20,15 +20,15 @@ spring:
     show-sql: false
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: test-secret-key-for-junit-integration-test-environment-must-be-64-chars-minimum-ok
   token-validity-in-seconds: 36400
   refresh-token-validity-in-seconds: 604800
 
 portone:
   api:
-    secret: ${PORTONE_API_SECRET}
+    secret: test-portone-secret
   store:
-    id: ${PORTONE_STORE_ID}
+    id: test-store-id
   channel:
     kg-inicis: test-kg-channel
-    toss: ${PORTONE_CHANNEL_TOSS}
+    toss: test-toss-channel
