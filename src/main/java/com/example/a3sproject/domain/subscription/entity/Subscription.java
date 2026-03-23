@@ -44,11 +44,11 @@ public class Subscription extends BaseEntity {
     private long paymentMethodId; // 결제수단 아이디
 
     @Enumerated(EnumType.STRING)
-    private SubscriptionStatus status; //구독 상태
+    private SubscriptionStatus status; // 구독 상태
 
     private OffsetDateTime currentPeriodEnd; // 현재 이용기간 종료일
 
-    private OffsetDateTime canceledAt;
+    private OffsetDateTime canceledAt; // 구독 해지일
 
     private int amount;
 
@@ -61,5 +61,16 @@ public class Subscription extends BaseEntity {
         this.status = SubscriptionStatus.ACTIVE;
         this.currentPeriodEnd = OffsetDateTime.now().plusMonths(1); //한달후
         this.amount = amount;
+    }
+
+    // 구독 기간 갱신 (정기권 결제 성공시)
+    public void renewPeriod() {
+        this.currentPeriodEnd = this.currentPeriodEnd.plusMonths(1);
+        this.status = SubscriptionStatus.ACTIVE;
+    }
+
+    // 구독 상태 변경 - 연체(미납) (정기권 결제 실패시)
+    public void markAsPastDue() {
+        this.status = SubscriptionStatus.PAST_DUE;
     }
 }
