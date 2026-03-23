@@ -268,4 +268,27 @@ public class SubscriptionService {
             );
         }
     }
+
+    @Transactional
+    public void cancelSubscription(long userId, String subscriptionId) {
+        // 1. 구독 조회
+        Subscription subscription = subscriptionRepository
+                .findBySubscriptionUuid(subscriptionId)
+                .orElseThrow(() -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND));
+
+        // 2. 소유권 조회
+        if (!subscription.getUser().getId().equals(userId)) {
+            throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
+        }
+
+        // 3. 이미 해지/종료된 구독인지 확인
+        if (subscription.getStatus() == SubscriptionStatus.CANCELLED
+                || subscription.getStatus() == SubscriptionStatus.ENDED) {
+            throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_CANCELLED);
+        }
+
+        // 4. 구독 해지 (canceledAt 자동 저장, Dirty Checking으로 save() 불필요)
+        subscription.cancel();
+    }
+
 }

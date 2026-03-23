@@ -75,4 +75,17 @@ public class SubscriptionController {
         CreateBillingResponse response = subscriptionService.createBilling(userDetails.getId(), subscriptionId, request);
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
+
+    // 구독 해지
+    @PatchMapping("/{subscriptionId}")
+    public ResponseEntity<ApiResponseDto<Void>> cancelSubscription(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String subscriptionId,
+            @RequestBody UpdateSubscriptionRequest request
+    ) {
+        if ("cancel".equals(request.action())) {
+            subscriptionService.cancelSubscription(userDetails.getId(),subscriptionId);
+        }
+        return ResponseEntity.ok(ApiResponseDto.successWithNoContent());
+    }
 }
