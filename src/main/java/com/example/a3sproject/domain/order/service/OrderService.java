@@ -160,18 +160,38 @@ public class OrderService {
 
     // 주문 목록 조회
     public List<GetOrderListResponseDto> getAllOrderList(Long userId) {
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
+        // 1. 주문 목록 조회 (쿼리 1회)
+        List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+        if (orders.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 모든 주문에 대한 결제 정보를 한 번에 조회 (쿼리 1회, N+1 방지)
+        List<Payment> payments = paymentRepository.findByOrderIn(orders);
+
+        // 3. 주문 ID 기준으로 결제 정보를 Map으로 변환 (이후 DB 조회 없이 메모리에서 매칭)
+        // 중복 주문 방지 설계 한 번 더 도입
+        Map<Long, Payment> paymentMap = payments.stream()
+                .collect(Collectors.toMap(
+                        payment -> payment.getOrder().getId(),
+                        payment -> payment,
+                        (existing, newer) -> existing.getId() > newer.getId() ? existing : newer
+                ));
+
+        // 4. 주문별 DTO 변환 (결제 없는 주문도 null-safe하게 처리)
+        return orders.stream()
                 .map(order -> {
-                    Payment payment = paymentRepository.findByOrder(order).orElse(null);
+                    Payment payment = paymentMap.get(order.getId()); // 결제 없으면 null
                     return GetOrderListResponseDto.of(
                             order,
                             order.getUsedPointAmount(),
                             order.getFinalAmount(),
                             null, // earnedPoints → 목록에서는 조회 생략
-                            payment
+                            payment  // null 허용 (포인트 전액 결제 직후 등 결제 없는 케이스 대응)
                     );
-                }).toList();
+                })
+                .toList();
     }
 
     // 주문 상세 조회

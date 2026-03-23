@@ -1,0 +1,34 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  h2:
+    console:
+      enabled: false
+
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+jwt:
+  secret: test-secret-key-for-junit-integration-test-environment-must-be-64-chars-minimum-ok
+  token-validity-in-seconds: 36400
+  refresh-token-validity-in-seconds: 604800
+
+portone:
+  api:
+    secret: test-portone-secret
+  store:
+    id: test-store-id
+  channel:
+    kg-inicis: test-kg-channel
+    toss: test-toss-channel

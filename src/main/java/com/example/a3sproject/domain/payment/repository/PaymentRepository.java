@@ -6,6 +6,7 @@ import com.example.a3sproject.domain.payment.enums.PaidStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -16,4 +17,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @EntityGraph(attributePaths = {"order", "order.user", "order.orderItems", "order.orderItems.product"})
     Optional<Payment> findByPortOneId(String portOneId);
+
+    List<Payment> findByOrderIn(List<Order> orders);
 }
