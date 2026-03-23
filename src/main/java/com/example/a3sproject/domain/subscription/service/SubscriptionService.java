@@ -4,11 +4,15 @@ import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.paymentMethod.repository.PaymentMethodRepository;
 import com.example.a3sproject.domain.portone.PortOneClient;
-import com.example.a3sproject.domain.portone.dto.*;
+import com.example.a3sproject.domain.portone.dto.request.BillingKeyPaymentRequest;
+import com.example.a3sproject.domain.portone.dto.response.BillingKeyPaymentResponse;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
+import com.example.a3sproject.domain.portone.dto.response.ValidateBillingKeyResponse;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dtos.response.GetAllBillingsResponse;
+import com.example.a3sproject.domain.subscription.dtos.response.GetBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.entity.Subscription;
 import com.example.a3sproject.domain.subscription.entity.SubscriptionBilling;
@@ -17,7 +21,6 @@ import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
 import com.example.a3sproject.domain.subscription.repository.SubscriptionBillingRepository;
 import com.example.a3sproject.domain.subscription.repository.SubscriptionRepository;
 import com.example.a3sproject.domain.user.entity.User;
-import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
@@ -28,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -39,7 +43,6 @@ public class SubscriptionService {
     private final SubscriptionBillingRepository subscriptionBillingRepository;
     private final PortOneClient portOneClient;
     private final SubscriptionTxService subscriptionTxService;
-    private final UserRepository userRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final PortOneProperties portOneProperties;
 
@@ -57,18 +60,25 @@ public class SubscriptionService {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
-        return subscriptionTxService.saveSubscription(userId, request);
+        CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(userId, request);
+
+        // 즉시 결제
+        CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusMonths(1)
+        );
+        createBilling(userId, response.subscriptionId(), firstBillingRequest);
+
+        return response;
     }
 
-    public GetSubscriptionResponse getSubscription(long userId, String subscriptionId) {
-        User user = userRepository.findById(userId).orElseThrow(
-                () -> new SubscriptionException(ErrorCode.USER_NOT_FOUND)
-        );
+    public GetSubscriptionResponse getSubscription(User user, String subscriptionId) {
         Subscription subscription = subscriptionRepository.findBySubscriptionUuid(subscriptionId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 소유권 검증
-        if (!subscription.getUser().getId().equals(userId)) {
+
+        if (!subscription.getUser().getId().equals(user.getId())) {
             throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
         }
 
@@ -84,6 +94,34 @@ public class SubscriptionService {
                 subscription.getAmount(),
                 subscription.getCurrentPeriodEnd()
         );
+    }
+
+    public GetAllBillingsResponse getBillings(User user, String subscriptionId) {
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuid(subscriptionId).orElseThrow(
+                () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
+        );
+        // 소유권 검증
+        if (!subscription.getUser().getId().equals(user.getId())) {
+            throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
+        }
+        List<SubscriptionBilling> history = subscriptionBillingRepository.findBySubscription(subscription);
+        List<GetBillingResponse> responses = new ArrayList<>();
+
+        for (SubscriptionBilling billing : history) {
+            GetBillingResponse response = new GetBillingResponse(
+                    billing.getBillingUuid(),
+                    billing.getPeriodStart(),
+                    billing.getPeriodEnd(),
+                    billing.getAmount(),
+                    billing.getStatus(),
+                    billing.getPaymentId(), //(선택)
+                    billing.getCreatedAt(), //(선택)
+                    billing.getFailureMessage() //(선택)
+            );
+            responses.add(response);
+        }
+
+        return new GetAllBillingsResponse(responses);
     }
 
     @Transactional
@@ -102,7 +140,7 @@ public class SubscriptionService {
                     .orElseThrow(() -> new SubscriptionException(ErrorCode.PAYMENTMETHOD_NOT_FOUND));
 
             // 3. paymentId 생성
-            String paymentId = GenerateCodeUuid.generateCodeUuid("BIL");
+            String paymentId = GenerateCodeUuid.generateCodeUuid("SUB");
 
             // 4. 요청 DTO 생성
             BillingKeyPaymentRequest request = new BillingKeyPaymentRequest(
@@ -125,7 +163,7 @@ public class SubscriptionService {
                             subscription.getAmount(),
                             SubscriptionBillingStatus.COMPLETED,
                             paymentId,
-                            response.getPaidAt(),
+//                            response.getPaidAt(),
                             subscription.getCurrentPeriodEnd(),
                             subscription.getCurrentPeriodEnd().plusMonths(1),
                             null
@@ -146,7 +184,7 @@ public class SubscriptionService {
                         subscription.getAmount(),
                         SubscriptionBillingStatus.FAILED,
                         null,
-                        OffsetDateTime.now(),
+//                        OffsetDateTime.now(),
                         subscription.getCurrentPeriodEnd(),
                         subscription.getCurrentPeriodEnd().plusMonths(1),
                         e.getMessage()
@@ -163,7 +201,7 @@ public class SubscriptionService {
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
         // 본인 구독인지 확인
-        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUserId(subscriptionId, userId).orElseThrow(
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUser_Id(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 빌링키 가져오기
@@ -194,9 +232,8 @@ public class SubscriptionService {
                     amount,
                     SubscriptionBillingStatus.COMPLETED,
                     paymentId,
-                    OffsetDateTime.now(),
-                    OffsetDateTime.parse(request.getPeriodStart()),
-                    OffsetDateTime.parse(request.getPeriodEnd()),
+                    request.periodStart(),
+                    request.periodEnd(),
                     null
             );
             SubscriptionBilling savedBilling = subscriptionBillingRepository.save(subscriptionBillingSuccess);
@@ -217,9 +254,8 @@ public class SubscriptionService {
                     amount,
                     SubscriptionBillingStatus.FAILED,
                     null,
-                    OffsetDateTime.now(),
-                    OffsetDateTime.parse(request.getPeriodStart()),
-                    OffsetDateTime.parse(request.getPeriodEnd()),
+                    request.periodStart(),
+                    request.periodEnd(),
                     e.getMessage()
             );
             subscriptionBillingRepository.save(subscriptionBillingFail);
@@ -232,5 +268,4 @@ public class SubscriptionService {
             );
         }
     }
-
 }

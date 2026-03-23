@@ -5,7 +5,7 @@ import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.payment.dto.PaymentProcessResult;
 import com.example.a3sproject.domain.payment.entity.Payment;
 import com.example.a3sproject.domain.portone.PortOneClient;
-import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentRequest;
+import com.example.a3sproject.domain.portone.dto.request.PortOneCancelPaymentRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

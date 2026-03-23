@@ -1,7 +1,6 @@
-package com.example.a3sproject.domain.portone.dto;
+package com.example.a3sproject.domain.portone.dto.response;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 
 public record PortOneCancelPaymentResponse(
         Cancellation cancellation

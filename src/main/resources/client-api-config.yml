@@ -341,8 +341,8 @@ api:
               description: 결제 주기 (MONTHLY, QUARTERLY, ANNUAL)
 
     create-subscription:
-      url:
-      method:
+      url: /api/subscriptions
+      method: POST
       description: 구독 생성 (빌링키 저장 + 구독 생성을 하나의 트랜잭션으로 처리)
       request:
         fields:
@@ -372,8 +372,8 @@ api:
               usage: 구독 관리 페이지 리다이렉트에 사용
 
     get-subscription:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}
+      method: GET
       description: 구독 조회
       pathParams:
         - name: {subscriptionId}
@@ -480,11 +480,11 @@ api:
               description: "청구 상태 (COMPLETED: 결제 완료, FAILED: 실패)"
 
     list-billing-history:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}/billings
+      method: GET
       description: 청구 내역 조회
       pathParams:
-        - name:
+        - name: {subscriptionId}
           description: 구독 ID
       response:
         body:

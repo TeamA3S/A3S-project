@@ -9,29 +9,24 @@ import com.example.a3sproject.domain.order.enums.OrderStatus;
 import com.example.a3sproject.domain.payment.entity.Payment;
 import com.example.a3sproject.domain.payment.enums.PaidStatus;
 import com.example.a3sproject.domain.payment.repository.PaymentRepository;
-import com.example.a3sproject.domain.payment.service.PaymentService;
 import com.example.a3sproject.domain.point.entity.PointTransaction;
 import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.domain.point.repository.PointRepository;
 import com.example.a3sproject.domain.point.service.PointService;
 import com.example.a3sproject.domain.portone.PortOneClient;
-import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentRequest;
-import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentResponse;
+import com.example.a3sproject.domain.portone.dto.request.PortOneCancelPaymentRequest;
+import com.example.a3sproject.domain.portone.dto.response.PortOneCancelPaymentResponse;
 import com.example.a3sproject.domain.refunds.dto.request.RefundRequestDto;
 import com.example.a3sproject.domain.refunds.dto.response.RefundResponseDto;
-import com.example.a3sproject.domain.refunds.entity.Refund;
 import com.example.a3sproject.domain.refunds.enums.RefundStatus;
 import com.example.a3sproject.domain.refunds.repository.RefundRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.RefundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

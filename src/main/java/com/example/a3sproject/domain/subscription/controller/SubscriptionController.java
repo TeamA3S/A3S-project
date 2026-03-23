@@ -6,6 +6,7 @@ import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptio
 import com.example.a3sproject.domain.subscription.dtos.request.UpdateSubscriptionRequest;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dtos.response.GetAllBillingsResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.service.SubscriptionService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
@@ -40,7 +41,7 @@ public class SubscriptionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId
     ) {
-        GetSubscriptionResponse response = subscriptionService.getSubscription(userDetails.getId(), subscriptionId);
+        GetSubscriptionResponse response = subscriptionService.getSubscription(userDetails.getUser(), subscriptionId);
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
@@ -55,10 +56,12 @@ public class SubscriptionController {
     }
 
     @GetMapping("/{subscriptionId}/billings")
-    public void /**ResponseEntity<ApiResponseDto<GetSubscriptionResponse>>*/ GetBillings(
+    public ResponseEntity<ApiResponseDto<GetAllBillingsResponse>> GetBillings(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId
     ){
+        GetAllBillingsResponse response = subscriptionService.getBillings(userDetails.getUser(), subscriptionId);
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK,  response));
 
     }
 
