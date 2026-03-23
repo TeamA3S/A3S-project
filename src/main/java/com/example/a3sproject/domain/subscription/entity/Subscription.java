@@ -2,9 +2,7 @@ package com.example.a3sproject.domain.subscription.entity;
 
 import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
-import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
-import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.entity.BaseEntity;
@@ -14,8 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Entity

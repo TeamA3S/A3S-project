@@ -16,7 +16,7 @@ import com.example.a3sproject.domain.point.service.PointService;
 import com.example.a3sproject.domain.portone.enums.PortOnePayStatus;
 import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.payment.repository.PaymentRepository;
-import com.example.a3sproject.domain.portone.dto.PortOnePaymentResponse;
+import com.example.a3sproject.domain.portone.dto.response.PortOnePaymentResponse;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
@@ -25,8 +25,6 @@ import com.example.a3sproject.global.exception.domain.PaymentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.OffsetDateTime;
 
 
 @Service
