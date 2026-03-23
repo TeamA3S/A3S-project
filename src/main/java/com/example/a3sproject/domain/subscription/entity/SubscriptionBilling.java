@@ -1,6 +1,7 @@
 package com.example.a3sproject.domain.subscription.entity;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
+import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,14 +19,15 @@ import java.time.OffsetDateTime;
      *           )
         }*/)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class SubscriptionBilling {
+public class SubscriptionBilling extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "subscription_billing_id")
     private Long id;
 
-    private String subscriptionId; // 구독 아이디
+    private String subscriptionUuid; // 구독 아이디
     private int amount; // 청구 금액
+    @Enumerated(EnumType.STRING)
     private SubscriptionBillingStatus status; // 청구 상태
     private String paymentId; // 결제 아이디
     private OffsetDateTime attemptDate; //결제시도일
