@@ -1,6 +1,7 @@
 package com.example.a3sproject.config;
 
 import com.example.a3sproject.global.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -10,12 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -26,14 +23,6 @@ import java.util.List;
 
 import static org.springframework.boot.security.autoconfigure.web.servlet.PathRequest.toStaticResources;
 
-/**
- * Spring Security 설정 - JWT 기반 인증
- *
- * TODO: 개선 사항
- * - CORS 설정 추가
- * - 역할 기반 접근 제어 (ROLE_ADMIN, ROLE_USER)
- * - API 엔드포인트별 세밀한 권한 설정
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -87,6 +76,26 @@ public class SecurityConfig {
                     // 6) 나머지 전부 인증 필요
                     .anyRequest().authenticated()
             )
+
+                // 인증/인가 실패 처리
+                .exceptionHandling(ex -> ex
+                        // 인증 정보가 없는 요청 (토큰 없음) → 401
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다.\",\"data\":null}"
+                            );
+                        })
+                        // 인증은 됐지만 권한이 없는 요청 → 403
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write(
+                                    "{\"code\":\"FORBIDDEN\",\"message\":\"접근 권한이 없습니다.\",\"data\":null}"
+                            );
+                        })
+                )
 
             // JWT 필터 추가
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

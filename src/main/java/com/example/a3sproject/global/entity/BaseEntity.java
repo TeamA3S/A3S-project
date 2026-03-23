@@ -21,10 +21,4 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime modifiedAt;
-
-    private LocalDateTime expiredAt; // 포인트 만료일
-
-    public void setExpiredAt(LocalDateTime expiredAt) {
-        this.expiredAt = expiredAt;
-    }
 }
