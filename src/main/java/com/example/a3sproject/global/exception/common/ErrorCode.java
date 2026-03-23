@@ -13,6 +13,7 @@ public enum ErrorCode {
     USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 유저입니다."),
     USER_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     USER_FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    USER_NOT_MATCH(HttpStatus.BAD_REQUEST, "사용자가 일치하지 않습니다."),
 
     // Point
     POINT_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "포인트 잔액이 부족합니다."),
@@ -44,6 +45,17 @@ public enum ErrorCode {
     // Product
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     PRODUCT_OUT_OF_STOCK(HttpStatus.CONFLICT, "상품 재고가 부족합니다."),
+
+    // Plan
+    PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "플랜을 찾을 수 없습니다."),
+
+    // PaymentMethod
+    PAYMENTMETHOD_NOT_FOUND(HttpStatus.NOT_FOUND, "결제 수단을 찾을 수 없습니다."),
+    INVALID_BILLING_KEY(HttpStatus.BAD_REQUEST, "사용할 수 없는 빌링키입니다."),
+
+    //Subscription
+    SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "구독을 찾을수없습니다."),
+    SUBSCRIPTION_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 구독중인 플랜입니다."),
 
     // Common
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "잘못된 입력값입니다."),

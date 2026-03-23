@@ -6,10 +6,12 @@ import com.example.a3sproject.domain.subscription.dtos.request.UpdateSubscriptio
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.UpdateSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.service.SubsciptionService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,22 +21,26 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
+    private final SubsciptionService subsciptionService;
 
     // create-subscription
     @PostMapping
-    public void /**ResponseEntity<ApiResponseDto<CreateSubscriptionResponse>>*/ CreateSubscription(
+    public ResponseEntity<ApiResponseDto<CreateSubscriptionResponse>> CreateSubscription(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody CreateSubscriptionRequest request
     ) {
-
+        CreateSubscriptionResponse response = subsciptionService.createSubscription(customUserDetails.getId(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.success(HttpStatus.CREATED, response));
     }
 
     // get-subscription
     @GetMapping("/{subscriptionId}")
-    public void /**ResponseEntity<ApiResponseDto<GetSubscriptionResponse>>*/ GetSubscription( //Todo : Trace trace가 자동완성으로 들어왔는데 뭐였는지 확인할것
-                                                                                    @AuthenticationPrincipal CustomUserDetails userDetails,
-                                                                                    @PathVariable String subscriptionId
+    public ResponseEntity<ApiResponseDto<GetSubscriptionResponse>> GetSubscription(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String subscriptionId
     ) {
+        GetSubscriptionResponse response = subsciptionService.getSubscription(userDetails.getId(), subscriptionId);
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
     // update-subscription

@@ -3,6 +3,7 @@ package com.example.a3sproject.domain.paymentMethod.entity;
 import com.example.a3sproject.domain.paymentMethod.enums.PaymentMethodStatus;
 import com.example.a3sproject.domain.paymentMethod.enums.PgProvider;
 import com.example.a3sproject.domain.user.entity.User;
+import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -35,6 +36,8 @@ public class PaymentMethod extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PaymentMethodStatus status;
 
+    private String paymentMethodUuid;
+
     public PaymentMethod(User user, String billingKey, String customerUid,
                          PgProvider pgProvider, boolean isDefault, PaymentMethodStatus status) {
         this.user = user;
@@ -43,5 +46,6 @@ public class PaymentMethod extends BaseEntity {
         this.pgProvider = pgProvider;
         this.isDefault = isDefault;
         this.status = status;
+        this.paymentMethodUuid = GenerateCodeUuid.generateCodeUuid("PMD");
     }
 }
