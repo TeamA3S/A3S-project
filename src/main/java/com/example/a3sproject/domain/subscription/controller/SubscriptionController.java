@@ -22,15 +22,16 @@ public class SubscriptionController {
 
     // create-subscription
     @PostMapping
-    public ResponseEntity<ApiResponseDto<CreateSubscriptionResponse>> CreateSubscription(
+    public void /**ResponseEntity<ApiResponseDto<CreateSubscriptionResponse>>*/ CreateSubscription(
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody CreateSubscriptionRequest request
     ) {
+
     }
 
     // get-subscription
     @GetMapping("/{subscriptionId}")
-    public ResponseEntity<ApiResponseDto<GetSubscriptionResponse>> GetSubscription( //Todo : Trace trace가 자동완성으로 들어왔는데 뭐였는지 확인할것
+    public void /**ResponseEntity<ApiResponseDto<GetSubscriptionResponse>>*/ GetSubscription( //Todo : Trace trace가 자동완성으로 들어왔는데 뭐였는지 확인할것
                                                                                     @AuthenticationPrincipal CustomUserDetails userDetails,
                                                                                     @PathVariable String subscriptionId
     ) {
@@ -38,7 +39,7 @@ public class SubscriptionController {
 
     // update-subscription
     @PatchMapping ("/{subscriptionId}")
-    public ResponseEntity<ApiResponseDto<UpdateSubscriptionResponse>> UpdateSubscription(
+    public void /**ResponseEntity<ApiResponseDto<UpdateSubscriptionResponse>>*/ UpdateSubscription(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId,
             @RequestBody UpdateSubscriptionRequest request
@@ -47,7 +48,7 @@ public class SubscriptionController {
     }
 
     @GetMapping("/{subscriptionId}/billings")
-    public ResponseEntity<ApiResponseDto<GetSubscriptionResponse>> GetBillings(
+    public void /**ResponseEntity<ApiResponseDto<GetSubscriptionResponse>>*/ GetBillings(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId
     ){
