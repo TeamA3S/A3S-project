@@ -150,7 +150,7 @@ public class SubscriptionService {
                         .attemptDate(OffsetDateTime.now())
                         .periodStart(subscription.getCurrentPeriodEnd())
                         .periodEnd(subscription.getCurrentPeriodEnd().plusMonths(1))
-                        .failureMessage(e.getMessage())  // 성공이므로 null
+                        .failureMessage(e.getMessage()) // 실패시 메시지
                         .build();
                 subscriptionBillingRepository.save(billing);
 
