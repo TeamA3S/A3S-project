@@ -9,7 +9,7 @@ import com.example.a3sproject.domain.plan.repository.PlanRepository;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.entity.Subscription;
-import com.example.a3sproject.domain.subscription.repository.SubsciptionRepository;
+import com.example.a3sproject.domain.subscription.repository.SubscriptionRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SubscriptionTxService {
     private final UserRepository userRepository;
     private final PaymentMethodRepository paymentMethodRepository;
-    private final SubsciptionRepository subsciptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final PlanRepository planRepository;
 
     public CreateSubscriptionResponse saveSubscription(long userId, CreateSubscriptionRequest request) {
@@ -54,7 +54,7 @@ public class SubscriptionTxService {
                 paymentMethod,
                 request.amount()
         );
-        subsciptionRepository.save(subscription);
+        subscriptionRepository.save(subscription);
 
         return new CreateSubscriptionResponse(subscription.getSubscriptionUuid());
     }

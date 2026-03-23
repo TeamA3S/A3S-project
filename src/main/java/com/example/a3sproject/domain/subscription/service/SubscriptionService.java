@@ -4,9 +4,7 @@ import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.paymentMethod.repository.PaymentMethodRepository;
 import com.example.a3sproject.domain.portone.PortOneClient;
-import com.example.a3sproject.domain.portone.dto.BillingKeyPaymentRequest;
-import com.example.a3sproject.domain.portone.dto.BillingKeyPaymentResponse;
-import com.example.a3sproject.domain.portone.dto.ValidateBillingKeyResponse;
+import com.example.a3sproject.domain.portone.dto.*;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
@@ -16,8 +14,8 @@ import com.example.a3sproject.domain.subscription.entity.Subscription;
 import com.example.a3sproject.domain.subscription.entity.SubscriptionBilling;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
-import com.example.a3sproject.domain.subscription.repository.SubsciptionBillingRepository;
-import com.example.a3sproject.domain.subscription.repository.SubsciptionRepository;
+import com.example.a3sproject.domain.subscription.repository.SubscriptionBillingRepository;
+import com.example.a3sproject.domain.subscription.repository.SubscriptionRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
@@ -25,17 +23,20 @@ import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.SubscriptionException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class SubsciptionService {
-    private final SubsciptionRepository subsciptionRepository;
-    private final SubsciptionBillingRepository subsciptionBillingRepository;
+public class SubscriptionService {
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionBillingRepository subscriptionBillingRepository;
     private final PortOneClient portOneClient;
     private final SubscriptionTxService subscriptionTxService;
     private final UserRepository userRepository;
@@ -48,11 +49,11 @@ public class SubsciptionService {
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
 
         // 검증 추가
-        if(!"ISSUED".equals(validateBillingKeyResponse.status())) {
+        if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
         // 중복 검증
-        if(subsciptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
+        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
@@ -63,11 +64,11 @@ public class SubsciptionService {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.USER_NOT_FOUND)
         );
-        Subscription subscription = subsciptionRepository.findBySubscriptionUuid(subscriptionId).orElseThrow(
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuid(subscriptionId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 소유권 검증
-        if(!subscription.getUser().getId().equals(userId)) {
+        if (!subscription.getUser().getId().equals(userId)) {
             throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
         }
 
@@ -85,10 +86,84 @@ public class SubsciptionService {
         );
     }
 
+    @Transactional
+    public void processScheduledBillings() {
+        // 1. 결제 대상 구독 목록 조회
+        List<Subscription> targets = subscriptionRepository
+                .findByStatusInAndCurrentPeriodEndBefore(
+                        List.of(SubscriptionStatus.ACTIVE, SubscriptionStatus.PAST_DUE),
+                        OffsetDateTime.now()
+                );
+
+        for (Subscription subscription : targets) {
+            // 2. billingKey 조회
+            PaymentMethod paymentMethod = paymentMethodRepository
+                    .findById(subscription.getPaymentMethod().getId())
+                    .orElseThrow(() -> new SubscriptionException(ErrorCode.PAYMENTMETHOD_NOT_FOUND));
+
+            // 3. paymentId 생성
+            String paymentId = GenerateCodeUuid.generateCodeUuid("BIL");
+
+            // 4. 요청 DTO 생성
+            BillingKeyPaymentRequest request = new BillingKeyPaymentRequest(
+                    portOneProperties.getStore().getId(),
+                    paymentMethod.getBillingKey(),
+                    subscription.getPlan().getName() + "플랜 정기결제",
+                    new BillingKeyPaymentRequest.PaymentAmountInput(subscription.getAmount()),
+                    "KRW"
+            );
+
+            try {
+                // 5. PortOne API 호출
+                BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
+
+                // 6. 성공 시 처리
+                if ("PAID".equals(response.getStatus())) {
+                    // 6-1. 구독 청구 이력 저장
+                    SubscriptionBilling billing = new SubscriptionBilling(
+                            subscription,
+                            subscription.getAmount(),
+                            SubscriptionBillingStatus.COMPLETED,
+                            paymentId,
+                            response.getPaidAt(),
+                            subscription.getCurrentPeriodEnd(),
+                            subscription.getCurrentPeriodEnd().plusMonths(1),
+                            null
+                    );
+                    subscriptionBillingRepository.save(billing);
+
+                    // 6-2. 구독 기간 연장 및 상태 ACTIVE로 변경
+                    subscription.renewPeriod();
+                }
+
+            } catch (Exception e) {
+                log.error("정기결제 실패 subscriptionUuid: {}, error: {}",
+                        subscription.getSubscriptionUuid(), e.getMessage());
+
+                // 7. 실패 시 처리
+                SubscriptionBilling billing = new SubscriptionBilling(
+                        subscription,
+                        subscription.getAmount(),
+                        SubscriptionBillingStatus.FAILED,
+                        null,
+                        OffsetDateTime.now(),
+                        subscription.getCurrentPeriodEnd(),
+                        subscription.getCurrentPeriodEnd().plusMonths(1),
+                        e.getMessage()
+                );
+                subscriptionBillingRepository.save(billing);
+
+                // 8. 구독 상태 PAST_DUE로 변경
+                subscription.markAsPastDue();
+            }
+        }
+
+    }
+
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
         // 본인 구독인지 확인
-        Subscription subscription = subsciptionRepository.findBySubscriptionUuidAndUserId(subscriptionId, userId).orElseThrow(
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUserId(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 빌링키 가져오기
@@ -119,12 +194,12 @@ public class SubsciptionService {
                     amount,
                     SubscriptionBillingStatus.COMPLETED,
                     paymentId,
-                    LocalDateTime.now(),
-                    LocalDateTime.parse(request.getPeriodStart()),
-                    LocalDateTime.parse(request.getPeriodEnd()),
+                    OffsetDateTime.now(),
+                    OffsetDateTime.parse(request.getPeriodStart()),
+                    OffsetDateTime.parse(request.getPeriodEnd()),
                     null
             );
-            SubscriptionBilling savedBilling = subsciptionBillingRepository.save(subscriptionBillingSuccess);
+            SubscriptionBilling savedBilling = subscriptionBillingRepository.save(subscriptionBillingSuccess);
 
             return new CreateBillingResponse(
                     true,
@@ -133,7 +208,7 @@ public class SubsciptionService {
                     amount,
                     SubscriptionBillingStatus.COMPLETED
             );
-        }catch (PaymentException e) {
+        } catch (PaymentException e) {
             throw e;
         } catch (Exception e) {
             // 실패시 구독 청구에 저장
@@ -142,12 +217,12 @@ public class SubsciptionService {
                     amount,
                     SubscriptionBillingStatus.FAILED,
                     null,
-                    LocalDateTime.now(),
-                    LocalDateTime.parse(request.getPeriodStart()),
-                    LocalDateTime.parse(request.getPeriodEnd()),
+                    OffsetDateTime.now(),
+                    OffsetDateTime.parse(request.getPeriodStart()),
+                    OffsetDateTime.parse(request.getPeriodEnd()),
                     e.getMessage()
             );
-            subsciptionBillingRepository.save(subscriptionBillingFail);
+            subscriptionBillingRepository.save(subscriptionBillingFail);
             return new CreateBillingResponse(
                     false,
                     null,

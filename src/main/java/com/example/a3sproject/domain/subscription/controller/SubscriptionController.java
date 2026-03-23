@@ -7,8 +7,7 @@ import com.example.a3sproject.domain.subscription.dtos.request.UpdateSubscriptio
 import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.UpdateSubscriptionResponse;
-import com.example.a3sproject.domain.subscription.service.SubsciptionService;
+import com.example.a3sproject.domain.subscription.service.SubscriptionService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
-    private final SubsciptionService subsciptionService;
+    private final SubscriptionService subscriptionService;
 
     // create-subscription
     @PostMapping
@@ -31,7 +30,7 @@ public class SubscriptionController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody CreateSubscriptionRequest request
     ) {
-        CreateSubscriptionResponse response = subsciptionService.createSubscription(customUserDetails.getId(), request);
+        CreateSubscriptionResponse response = subscriptionService.createSubscription(customUserDetails.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.success(HttpStatus.CREATED, response));
     }
 
@@ -41,7 +40,7 @@ public class SubscriptionController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId
     ) {
-        GetSubscriptionResponse response = subsciptionService.getSubscription(userDetails.getId(), subscriptionId);
+        GetSubscriptionResponse response = subscriptionService.getSubscription(userDetails.getId(), subscriptionId);
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
@@ -70,7 +69,7 @@ public class SubscriptionController {
             @PathVariable String subscriptionId,
             @RequestBody CreateBillingRequest request
     ) {
-        CreateBillingResponse response = subsciptionService.createBilling(userDetails.getId(), subscriptionId, request);
+        CreateBillingResponse response = subscriptionService.createBilling(userDetails.getId(), subscriptionId, request);
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 }
