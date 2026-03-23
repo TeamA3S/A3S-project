@@ -201,7 +201,7 @@ public class SubscriptionService {
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
         // 본인 구독인지 확인
-        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUserId(subscriptionId, userId).orElseThrow(
+        Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUser_Id(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
         // 빌링키 가져오기
