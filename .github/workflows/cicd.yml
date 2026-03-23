@@ -36,15 +36,14 @@ jobs:
       - name: Gradle 실행 권한 부여
         run: chmod +x gradlew
 
-      # TODO: 테스트 코드 완성 후 아래 주석 해제 및 -x test 제거
-      # - name: 테스트 실행
-      #   env:
-      #     SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
-      #     SPRING_DATASOURCE_USERNAME: sa
-      #     SPRING_DATASOURCE_PASSWORD:
-      #     SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
-      #     SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
-      #   run: ./gradlew test
+      - name: 테스트 실행
+        env:
+         SPRING_PROFILES_ACTIVE: test
+         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+         PORTONE_API_SECRET: ${{ secrets.PORTONE_API_SECRET }}
+         PORTONE_STORE_ID: ${{ secrets.PORTONE_STORE_ID }}
+         PORTONE_CHANNEL_TOSS: ${{ secrets.PORTONE_CHANNEL_TOSS }}
+        run: ./gradlew test
 
       - name: 빌드 (테스트 스킵)
         run: ./gradlew build -x test

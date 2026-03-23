@@ -5,6 +5,7 @@ import com.example.a3sproject.global.dto.LoginRequestDto;
 import com.example.a3sproject.global.dto.LoginResponseDto;
 import com.example.a3sproject.global.security.refreshtoken.repository.RefreshTokenRepository;
 import com.example.a3sproject.global.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<ApiResponseDto<LoginResponseDto>> login(
-            @RequestBody LoginRequestDto request) {
+            @Valid @RequestBody LoginRequestDto request) {
 
         AuthService.AuthTokenDto tokens = authService.login(request);
 

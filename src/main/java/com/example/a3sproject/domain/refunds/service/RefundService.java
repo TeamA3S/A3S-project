@@ -1,6 +1,8 @@
 package com.example.a3sproject.domain.refunds.service;
 
 import com.example.a3sproject.config.PortOneProperties;
+import com.example.a3sproject.domain.membership.entity.Membership;
+import com.example.a3sproject.domain.membership.repository.MembershipRepository;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
@@ -18,6 +20,7 @@ import com.example.a3sproject.domain.portone.dto.PortOneCancelPaymentResponse;
 import com.example.a3sproject.domain.refunds.dto.request.RefundRequestDto;
 import com.example.a3sproject.domain.refunds.dto.response.RefundResponseDto;
 import com.example.a3sproject.domain.refunds.entity.Refund;
+import com.example.a3sproject.domain.refunds.enums.RefundStatus;
 import com.example.a3sproject.domain.refunds.repository.RefundRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -39,6 +43,7 @@ public class RefundService {
     private final PointService pointService;
     private final PointRepository pointRepository;
     private final PortOneProperties portOneProperties;
+    private final MembershipRepository membershipRepository;
 
     @Transactional
     public RefundResponseDto refundPayment(Long userId, String portOneId, RefundRequestDto requestDto) {
@@ -46,6 +51,14 @@ public class RefundService {
         Payment payment = paymentRepository.findByPortOneId(portOneId).orElseThrow(
                 () -> new RefundException(ErrorCode.PAYMENT_NOT_FOUND)
         );
+
+        // 이미 진행된 환불인지 확인
+        boolean alreadyRefunded = refundRepository.existsByPaymentIdAndRefundStatus(
+                payment.getId(), RefundStatus.COMPLETED);
+        if (alreadyRefunded) {
+            throw new RefundException(ErrorCode.DUPLICATE_REFUND_REQUEST);
+        }
+
         // 본인 주문인지 확인
         Order order = payment.getOrder();
         if (!order.getUser().getId().equals(userId)) {
@@ -103,6 +116,14 @@ public class RefundService {
 
             // 주문상태 환불완료로 변경
             order.markRefunded();
+
+            // 총 결제금액 차감 후 등급 재계산
+            order.getUser().updateTotalPaymentAmount(-payment.getPaidAmount());
+
+            Membership membership = membershipRepository.findWithLockByUser(order.getUser()).orElseThrow(
+                    () -> new RefundException(ErrorCode.USER_FORBIDDEN)
+            );
+            membership.updateGrade(order.getUser().getTotalPaymentAmount());
 
             // 재고 복구
             for (OrderItem orderItem : order.getOrderItems()) {
