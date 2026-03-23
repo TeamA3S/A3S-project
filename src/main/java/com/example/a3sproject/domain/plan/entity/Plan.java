@@ -19,6 +19,8 @@ public class Plan extends BaseEntity {
     private int amount;
     private String billingCycle; // 결제 주기
     private boolean active;
+    @Column(unique = true)
+    private String planUuid;
 
     public Plan(String name, int amount, String billingCycle, boolean active) {
         this.name = name;
