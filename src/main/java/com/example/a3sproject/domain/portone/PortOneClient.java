@@ -1,17 +1,18 @@
 package com.example.a3sproject.domain.portone;
 
-import com.example.a3sproject.domain.portone.dto.*;
+import com.example.a3sproject.domain.portone.dto.request.BillingKeyPaymentRequest;
+import com.example.a3sproject.domain.portone.dto.request.PortOneCancelPaymentRequest;
+import com.example.a3sproject.domain.portone.dto.response.BillingKeyPaymentResponse;
+import com.example.a3sproject.domain.portone.dto.response.PortOneCancelPaymentResponse;
+import com.example.a3sproject.domain.portone.dto.response.PortOnePaymentResponse;
+import com.example.a3sproject.domain.portone.dto.response.ValidateBillingKeyResponse;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestClient;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Component
 public class PortOneClient { // 실제 API 호출, webhook이랑 같은 로직

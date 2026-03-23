@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.portone.dto;
+package com.example.a3sproject.domain.portone.dto.response;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
 import lombok.Getter;
