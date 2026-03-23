@@ -94,7 +94,7 @@ public class SubsciptionService {
         // 빌링키 가져오기
         String billingKey = subscription.getPaymentMethod().getBillingKey();
 
-        // 플랜 금액 가져옥;
+        // 플랜 금액 가져오기;
         int amount = subscription.getPlan().getAmount();
 
         // 포트원에 빌링키 결제 API 호출
