@@ -1,8 +1,10 @@
 package com.example.a3sproject.domain.subscription.entity;
 
+import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
+import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.entity.BaseEntity;
@@ -12,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -45,12 +49,9 @@ public class Subscription extends BaseEntity {
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
-    private SubscriptionStatus status; // 구독 상태
-
+    private SubscriptionStatus status; //구독 상태
     private OffsetDateTime currentPeriodEnd; // 현재 이용기간 종료일
-
-    private OffsetDateTime canceledAt; // 구독 해지일
-
+    private OffsetDateTime canceledAt;
     private int amount;
 
 
