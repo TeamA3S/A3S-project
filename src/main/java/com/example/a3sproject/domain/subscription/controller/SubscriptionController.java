@@ -45,16 +45,6 @@ public class SubscriptionController {
         return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 
-    // update-subscription
-    @PatchMapping ("/{subscriptionId}")
-    public void /**ResponseEntity<ApiResponseDto<UpdateSubscriptionResponse>>*/ UpdateSubscription(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable String subscriptionId,
-            @RequestBody UpdateSubscriptionRequest request
-    ) {
-
-    }
-
     @GetMapping("/{subscriptionId}/billings")
     public ResponseEntity<ApiResponseDto<GetAllBillingsResponse>> GetBillings(
             @AuthenticationPrincipal CustomUserDetails userDetails,
