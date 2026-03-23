@@ -1,8 +1,10 @@
 package com.example.a3sproject.domain.subscription.controller;
 
 
+import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
 import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
 import com.example.a3sproject.domain.subscription.dtos.request.UpdateSubscriptionRequest;
+import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.dtos.response.UpdateSubscriptionResponse;
@@ -59,5 +61,16 @@ public class SubscriptionController {
             @PathVariable String subscriptionId
     ){
 
+    }
+
+    // 수동 즉시 청구 (빌링키로 결제)
+    @PostMapping("/{subscriptionId}/billings")
+    public ResponseEntity<ApiResponseDto<CreateBillingResponse>> createBilling(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable String subscriptionId,
+            @RequestBody CreateBillingRequest request
+    ) {
+        CreateBillingResponse response = subsciptionService.createBilling(userDetails.getId(), subscriptionId, request);
+        return ResponseEntity.ok(ApiResponseDto.success(HttpStatus.OK, response));
     }
 }

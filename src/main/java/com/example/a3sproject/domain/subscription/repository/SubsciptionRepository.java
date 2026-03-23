@@ -10,4 +10,7 @@ public interface SubsciptionRepository extends JpaRepository<Subscription, Long>
     Optional<Subscription> findBySubscriptionUuid(String subscriptionId);
 
     boolean existsByUserIdAndPlanIdAndStatus(long userId, String planId, SubscriptionStatus subscriptionStatus);
+
+    // 본인 구독인지 확인 메서드용
+    Optional<Subscription> findBySubscriptionUuidAndUserId(String subscriptionUuid, Long userId);
 }

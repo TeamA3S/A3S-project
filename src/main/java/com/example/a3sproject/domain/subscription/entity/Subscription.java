@@ -1,14 +1,17 @@
 package com.example.a3sproject.domain.subscription.entity;
 
+import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
+import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.core.parameters.P;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -41,7 +44,9 @@ public class Subscription extends BaseEntity {
     @JoinColumn(name = "plan_id")
     private Plan plan;
 
-    private long paymentMethodId; // 결제수단 아이디
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_method_id")
+    private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status; //구독 상태
@@ -53,11 +58,11 @@ public class Subscription extends BaseEntity {
     private int amount;
 
 
-    public Subscription(User user, Plan plan, long paymentMethodId, int amount) {
+    public Subscription(User user, Plan plan, PaymentMethod paymentMethod, int amount) {
         this.subscriptionUuid = GenerateCodeUuid.generateCodeUuid("SUBS");
         this.user = user;
         this.plan = plan;
-        this.paymentMethodId = paymentMethodId;
+        this.paymentMethod = paymentMethod;
         this.status = SubscriptionStatus.ACTIVE;
         this.currentPeriodEnd = OffsetDateTime.now().plusMonths(1); //한달후
         this.amount = amount;

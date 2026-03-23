@@ -51,7 +51,7 @@ public class SubscriptionTxService {
         Subscription subscription = new Subscription(
                 user,
                 plan,
-                paymentMethod.getId(),
+                paymentMethod,
                 request.amount()
         );
         subsciptionRepository.save(subscription);
