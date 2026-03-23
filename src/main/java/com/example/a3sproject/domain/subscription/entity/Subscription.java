@@ -33,9 +33,6 @@ public class Subscription extends BaseEntity {
     @Column(unique = true)
     private String subscriptionUuid;
 
-    @OneToMany(mappedBy = "subscription") // 검토 필요
-    private List<SubscriptionBilling> subscriptionBilling = new ArrayList<>();
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
