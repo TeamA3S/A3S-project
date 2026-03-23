@@ -12,14 +12,13 @@ import com.example.a3sproject.domain.subscription.entity.Subscription;
 import com.example.a3sproject.domain.subscription.repository.SubsciptionRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
-import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.SubscriptionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// SubscriptionTxService (트랜잭션 있음)
+// 트랜잭션 사용을 위해서 분리
 @Service
 @RequiredArgsConstructor
 @Transactional

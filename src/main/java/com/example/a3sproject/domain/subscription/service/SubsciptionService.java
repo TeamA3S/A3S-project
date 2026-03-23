@@ -39,7 +39,7 @@ public class SubsciptionService {
         if(!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
-
+        // 중복 검증
         if(subsciptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
@@ -54,6 +54,7 @@ public class SubsciptionService {
         Subscription subscription = subsciptionRepository.findBySubscriptionUuid(subscriptionId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
+        // 소유권 검증
         if(!subscription.getUser().getId().equals(userId)) {
             throw new SubscriptionException(ErrorCode.USER_NOT_MATCH);
         }

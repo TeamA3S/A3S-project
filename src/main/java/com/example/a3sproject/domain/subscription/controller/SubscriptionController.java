@@ -35,7 +35,7 @@ public class SubscriptionController {
 
     // get-subscription
     @GetMapping("/{subscriptionId}")
-    public ResponseEntity<ApiResponseDto<GetSubscriptionResponse>> GetSubscription( //Todo : Trace trace가 자동완성으로 들어왔는데 뭐였는지 확인할것
+    public ResponseEntity<ApiResponseDto<GetSubscriptionResponse>> GetSubscription(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String subscriptionId
     ) {
