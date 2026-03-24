@@ -1,0 +1,150 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  # =============================================
+  # CI: 빌드 검증
+  # =============================================
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Gradle 캐시 설정
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Gradle 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: 테스트 실행
+        env:
+         SPRING_PROFILES_ACTIVE: test
+         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+         PORTONE_API_SECRET: ${{ secrets.PORTONE_API_SECRET }}
+         PORTONE_STORE_ID: ${{ secrets.PORTONE_STORE_ID }}
+         PORTONE_CHANNEL_TOSS: ${{ secrets.PORTONE_CHANNEL_TOSS }}
+         PORTONE_CHANNEL_TOSS_BILLING: ${{ secrets.PORTONE_CHANNEL_TOSS_BILLING }}
+
+        run: ./gradlew build test
+
+      - name: JAR artifact 저장
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/*.jar
+
+  # =============================================
+  # CD: Docker 빌드 & Push & EC2 배포
+  # =============================================
+  cd:
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.event_name == 'push'
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: CI에서 빌드한 JAR 다운로드
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/
+
+      - name: DockerHub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker 이미지 빌드 & Push (ARM64)
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          docker buildx create --use
+          docker buildx build --platform linux/arm64 \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:$SHORT_SHA \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest \
+            --push .
+          echo "✅ Pushed: ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:$SHORT_SHA"
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: EC2 배포 (SSM)
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:Name,Values=a3s-server" \
+              "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text \
+            --region ap-northeast-2)
+
+          # Parameter Store에서 값 읽기
+          DB_URL=$(aws ssm get-parameter --name "/a3s/DB_URL" --with-decryption --query "Parameter.Value" --output text)
+          DB_USERNAME=$(aws ssm get-parameter --name "/a3s/DB_USERNAME" --with-decryption --query "Parameter.Value" --output text)
+          DB_PASSWORD=$(aws ssm get-parameter --name "/a3s/DB_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+          JWT_SECRET=$(aws ssm get-parameter --name "/a3s/JWT_SECRET" --with-decryption --query "Parameter.Value" --output text)
+          JWT_VALIDITY=$(aws ssm get-parameter --name "/a3s/JWT_VALIDITY" --with-decryption --query "Parameter.Value" --output text)
+          JWT_REFRESH_VALIDITY=$(aws ssm get-parameter --name "/a3s/JWT_REFRESH_VALIDITY" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_API_SECRET=$(aws ssm get-parameter --name "/a3s/PORTONE_API_SECRET" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_STORE_ID=$(aws ssm get-parameter --name "/a3s/PORTONE_STORE_ID" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_CHANNEL_TOSS=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_TOSS" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_CHANNEL_TOSS_BILLING=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_TOSS_BILLING" --with-decryption --query "Parameter.Value" --output text)
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids $INSTANCE_ID \
+            --document-name "AWS-RunShellScript" \
+            --parameters commands="[
+              \"docker pull ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\",
+              \"docker stop app || true\",
+              \"docker rm app || true\",
+              \"docker run -d --name app -p 8080:8080 --restart unless-stopped \
+                -e SPRING_PROFILES_ACTIVE=prod \
+                -e DB_URL=$DB_URL \
+                -e DB_USERNAME=$DB_USERNAME \
+                -e DB_PASSWORD=$DB_PASSWORD \
+                -e JWT_SECRET=$JWT_SECRET \
+                -e JWT_VALIDITY=$JWT_VALIDITY \
+                -e JWT_REFRESH_VALIDITY=$JWT_REFRESH_VALIDITY \
+                -e PORTONE_API_SECRET=$PORTONE_API_SECRET \
+                -e PORTONE_STORE_ID=$PORTONE_STORE_ID \
+                -e PORTONE_CHANNEL_KG=$PORTONE_CHANNEL_KG \
+                -e PORTONE_CHANNEL_TOSS=$PORTONE_CHANNEL_TOSS \
+                -e PORTONE_CHANNEL_TOSS_BILLING=$PORTONE_CHANNEL_TOSS_BILLING \
+                ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\"
+            ]" \
+            --region ap-northeast-2 \
+            --query "Command.CommandId" \
+            --output text)
+
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id $INSTANCE_ID \
+            --region ap-northeast-2
+
+          echo "✅ EC2 배포 완료!"

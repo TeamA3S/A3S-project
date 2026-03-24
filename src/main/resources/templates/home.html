@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>홈 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link active">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">
+                🛍️ Commerce Payment & Subscription Demo
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem;">
+                부트캠프용 결제/구독 UI 템플릿 - PortOne 연동 데모
+            </p>
+
+            <div class="alert alert-info">
+                <strong>ℹ️ 프로젝트 안내</strong><br>
+                이 프로젝트는 <strong>UI 템플릿</strong>입니다. 비즈니스 로직 API는 구현되어 있지 않으며,
+                수강생이 직접 백엔드 API를 구현하고 <code>application.yml</code>의 엔드포인트 설정을 변경하여 연동합니다.
+            </div>
+
+            <div class="card-grid">
+                <!-- Shop Card -->
+                <div class="card">
+                    <div class="card-header">🛒 상점</div>
+                    <div class="card-subtitle">상품 목록 및 주문 생성</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">상품 목록 조회</li>
+                            <li class="feature-item">주문 생성 API 호출</li>
+                        </ul>
+                        <a href="/pages/shop" class="btn btn-primary" style="margin-top: 1rem;">상품 보러가기</a>
+                    </div>
+                </div>
+
+                <!-- Orders Card -->
+                <div class="card">
+                    <div class="card-header">📦 주문</div>
+                    <div class="card-subtitle">주문 조회 및 결제 처리</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">PortOne 결제창 열기 (SDK)</li>
+                            <li class="feature-item">결제 확정 (Confirm)</li>
+                            <li class="feature-item">결제 취소(환불)</li>
+                        </ul>
+                        <a href="/pages/orders" class="btn btn-primary" style="margin-top: 1rem;">주문 관리하기</a>
+                    </div>
+                </div>
+
+                <!-- Points Card -->
+                <div class="card">
+                    <div class="card-header">💰 포인트</div>
+                    <div class="card-subtitle">포인트 포함 결제 테스트</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">포인트 입력 모달</li>
+                            <li class="feature-item">포인트 차감 후 결제</li>
+                            <li class="feature-item">독립적인 테스트 환경</li>
+                        </ul>
+                        <a href="/pages/points" class="btn btn-primary" style="margin-top: 1rem;">포인트 결제하기</a>
+                    </div>
+                </div>
+
+                <!-- Plans Card -->
+                <div class="card">
+                    <div class="card-header">⭐ 플랜</div>
+                    <div class="card-subtitle">구독 플랜 목록</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">베이직 / 프로 / 맥스</li>
+                            <li class="feature-item">월 단위 정기결제</li>
+                            <li class="feature-item">플랜별 혜택 표시</li>
+                        </ul>
+                        <a href="/pages/plans" class="btn btn-primary" style="margin-top: 1rem;">플랜 보러가기</a>
+                    </div>
+                </div>
+
+                <!-- Subscribe Card -->
+                <div class="card">
+                    <div class="card-header">💳 구독 신청</div>
+                    <div class="card-subtitle">구독 신청 및 빌링키 발급</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">빌링키 발급 (PortOne SDK)</li>
+                            <li class="feature-item">결제수단 저장</li>
+                            <li class="feature-item">구독 생성 API 호출</li>
+                        </ul>
+                        <a href="/pages/subscribe" class="btn btn-primary" style="margin-top: 1rem;">구독 신청하기</a>
+                    </div>
+                </div>
+
+                <!-- Subscriptions Card -->
+                <div class="card">
+                    <div class="card-header">🔄 구독 관리</div>
+                    <div class="card-subtitle">구독 관리</div>
+                    <div class="card-body">
+                        <ul class="features-list">
+                            <li class="feature-item">이번 주기 청구 실행</li>
+                            <li class="feature-item">구독 해지</li>
+                            <li class="feature-item">청구 내역 조회</li>
+                        </ul>
+                        <a href="/pages/subscriptions" class="btn btn-primary" style="margin-top: 1rem;">구독 관리하기</a>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
+                <h2 style="margin-bottom: 1rem;">🚀 시작하기</h2>
+                <ol style="margin-left: 1.5rem; line-height: 2;">
+                    <li><strong>API 구현:</strong> 백엔드 API를 구현하고 <code>application.yml</code>의 <code>app.demo-api.base-url</code>을 수정하세요.</li>
+                    <li><strong>엔드포인트 연결:</strong> 각 엔드포인트 경로를 실제 구현한 경로로 변경하세요.</li>
+                    <li><strong>테스트:</strong> 각 페이지에서 버튼을 클릭하여 API 호출을 테스트하세요.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- API Panel -->
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

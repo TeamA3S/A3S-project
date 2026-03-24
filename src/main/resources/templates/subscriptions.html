@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>구독 관리 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/portone-sdk.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link active">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 2rem;">🔄 구독 관리</h1>
+
+            <div class="card">
+                <div class="card-header">구독 정보</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">구독 ID</label>
+                        <input type="text" id="subscription-id" class="form-input" placeholder="sub_123456">
+                    </div>
+                    <button class="btn btn-outline" onclick="getSubscription()">
+                        🔍 구독 정보 불러오기
+                    </button>
+
+                    <!-- 구독 상세 정보 표시 영역 -->
+                    <div id="subscription-details" style="display: none; margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                        <h4 style="margin: 0 0 1rem 0; font-size: 1rem; font-weight: 600;">📋 구독 상세</h4>
+                        <div style="display: grid; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">플랜 ID:</span>
+                                <span id="sub-plan-id" style="font-weight: 600;"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">구독 금액:</span>
+                                <span id="sub-amount" style="font-weight: 600; color: var(--success);"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">상태:</span>
+                                <span id="sub-status" style="font-weight: 600;"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">현재 이용 기간 종료일:</span>
+                                <span id="sub-period-end" style="font-weight: 600; color: var(--primary);"></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">고객 UID:</span>
+                                <span id="sub-customer-uid" style="font-family: monospace; font-size: 0.875rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">💰 청구 작업</div>
+                <div class="card-subtitle">구독 청구 관리</div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>ℹ️ 안내:</strong> 실제 운영 환경에서는 스케줄러가 청구를 처리합니다.
+                        이 버튼들로 청구 작업을 시뮬레이션할 수 있습니다.
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="executeBilling()">
+                            💳 현재 주기 청구 실행
+                        </button>
+                        <button class="btn btn-secondary" onclick="getBillingHistory()">
+                            📋 청구 내역 보기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">⚙️ 구독 관리</div>
+                <div class="card-body">
+                    <div class="btn-group">
+                        <button class="btn btn-danger" onclick="cancelSubscription()">
+                            ❌ 구독 해지
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">📋 사용 안내</div>
+                <div class="card-body">
+                    <ol style="margin-left: 1.5rem; line-height: 2;">
+                        <li><a href="/pages/subscribe" style="color: var(--primary);">/subscribe</a> 페이지에서 구독 생성 </li>
+                        <li>받은 구독 ID 입력</li>
+                        <li>"구독 정보 불러오기"를 클릭하여 상세 정보 가져오기</li>
+                        <li>"현재 주기 청구 실행"을 사용하여 정기 결제 테스트</li>
+                        <li>"청구 내역 보기"로 모든 과거 청구 확인</li>
+                        <li>"구독 해지"를 사용하여 구독 종료</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div id="billing-history-container" style="margin-top: 1.5rem; display: none;">
+                <div class="card">
+                    <div class="card-header">📊 청구 내역</div>
+                    <div class="card-body">
+                        <div id="billing-history-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get subscriptionId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const subscriptionIdParam = urlParams.get('subscriptionId');
+        if (subscriptionIdParam) {
+            document.getElementById('subscription-id').value = subscriptionIdParam;
+        }
+
+        async function getSubscription() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            try {
+                const subscription = await makeApiRequest('get-subscription', {
+                    pathParams: subscriptionId
+                });
+
+                // 구독 정보 표시
+                document.getElementById('sub-plan-id').textContent = subscription.planId;
+                document.getElementById('sub-amount').textContent = `₩${subscription.amount.toLocaleString()}`;
+                document.getElementById('sub-status').textContent = subscription.status;
+                document.getElementById('sub-customer-uid').textContent = subscription.customerUid;
+
+                // 현재 이용 기간 종료일 포맷팅
+                const periodEnd = subscription.currentPeriodEnd
+                    ? subscription.currentPeriodEnd.substring(0, 19).replace('T', ' ')
+                    : 'N/A';
+                document.getElementById('sub-period-end').textContent = periodEnd;
+
+                // 구독 상세 영역 표시
+                document.getElementById('subscription-details').style.display = 'block';
+
+                showNotification('구독 정보를 불러왔습니다', 'success');
+            } catch (error) {
+                console.error('Failed to get subscription:', error);
+
+                // 구독 상세 영역 숨김
+                document.getElementById('subscription-details').style.display = 'none';
+
+                // API 미구현 에러 처리
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    showNotification('⚠️ 구독 조회 API가 구현되지 않았습니다. GET /api/subscriptions/{subscriptionId} 엔드포인트를 구현해주세요.', 'error');
+                } else if (error.message.includes('500') || error.message.includes('501')) {
+                    showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
+                } else {
+                    showNotification(`구독 정보 조회 실패: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function executeBilling() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            if (!confirm('현재 주기 청구를 실행하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                // 현재 날짜 기준으로 청구 기간 계산 (1개월)
+                const now = new Date();
+                const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+                await makeApiRequest('create-billing', {
+                    pathParams: subscriptionId,
+                    body: {
+                        periodStart: periodStart.toISOString(),
+                        periodEnd: periodEnd.toISOString()
+                    }
+                });
+                showNotification('청구가 성공적으로 실행되었습니다!', 'success');
+            } catch (error) {
+                console.error('Failed to execute billing:', error);
+
+                // API 미구현 에러 처리
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    showNotification('⚠️ 청구 생성 API가 구현되지 않았습니다. POST /api/subscriptions/{subscriptionId}/billings 엔드포인트를 구현해주세요.', 'error');
+                } else if (error.message.includes('500') || error.message.includes('501')) {
+                    showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
+                } else {
+                    showNotification(`청구 실행 실패: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function getBillingHistory() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            try {
+                const result = await makeApiRequest('list-billing-history', {
+                    pathParams: subscriptionId
+                });
+
+                // Display billing history
+                const container = document.getElementById('billing-history-container');
+                const listDiv = document.getElementById('billing-history-list');
+
+                if (result.billings && result.billings.length > 0) {
+                    listDiv.innerHTML = result.billings.map(billing => {
+                        // 날짜 포맷팅 (YYYY-MM-DD만 표시)
+                        const periodStart = billing.periodStart ? billing.periodStart.substring(0, 10) : '';
+                        const periodEnd = billing.periodEnd ? billing.periodEnd.substring(0, 10) : '';
+
+                        // 상태 색상
+                        let statusColor = 'var(--text-secondary)';
+                        if (billing.status === 'COMPLETED') statusColor = 'var(--success)';
+                        else if (billing.status === 'FAILED') statusColor = 'var(--danger)';
+
+                        return `
+                            <div style="padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md); margin-bottom: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>${periodStart} ~ ${periodEnd}</strong>
+                                        <div style="color: ${statusColor}; font-size: 0.875rem; margin-top: 0.25rem;">
+                                            ${billing.status}${billing.failureMessage ? ` - ${billing.failureMessage}` : ''}
+                                        </div>
+                                    </div>
+                                    <span style="color: var(--success); font-weight: 600;">₩${billing.amount.toLocaleString()}</span>
+                                </div>
+                                ${billing.attemptDate ? `
+                                    <div style="color: var(--text-secondary); font-size: 0.75rem; margin-top: 0.5rem;">
+                                        결제 시도: ${billing.attemptDate.substring(0, 19).replace('T', ' ')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    listDiv.innerHTML = '<p style="color: var(--text-secondary);">청구 내역이 없습니다</p>';
+                }
+
+                container.style.display = 'block';
+                showNotification('청구 내역을 불러왔습니다', 'success');
+            } catch (error) {
+                console.error('Failed to get billing history:', error);
+
+                // API 미구현 에러 처리
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    showNotification('⚠️ 청구 내역 조회 API가 구현되지 않았습니다. GET /api/subscriptions/{subscriptionId}/billings 엔드포인트를 구현해주세요.', 'error');
+                } else if (error.message.includes('500') || error.message.includes('501')) {
+                    showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
+                } else {
+                    showNotification(`청구 내역 조회 실패: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function cancelSubscription() {
+            const subscriptionId = document.getElementById('subscription-id').value.trim();
+            if (!subscriptionId) {
+                showNotification('⚠️ 구독 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            if (!confirm('정말로 구독을 해지하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                await makeApiRequest('update-subscription', {
+                    pathParams: subscriptionId,
+                    body: {
+                        action: 'cancel',
+                        reason: 'Customer request'
+                    }
+                });
+                showNotification('구독이 해지되었습니다', 'success');
+            } catch (error) {
+                console.error('Failed to cancel subscription:', error);
+
+                // API 미구현 에러 처리
+                if (error.message.includes('404') || error.message.includes('Not Found')) {
+                    showNotification('⚠️ 구독 업데이트 API가 구현되지 않았습니다. PATCH /api/subscriptions/{subscriptionId} 엔드포인트를 구현해주세요.', 'error');
+                } else if (error.message.includes('500') || error.message.includes('501')) {
+                    showNotification('⚠️ 서버 오류가 발생했습니다. API 구현을 확인해주세요.', 'error');
+                } else {
+                    showNotification(`구독 해지 실패: ${error.message}`, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

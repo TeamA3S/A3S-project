@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>주문 - Commerce Demo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/portone-sdk.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link active">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 2rem;">📦 주문 관리</h1>
+
+            <!-- API 구현 상태 안내 -->
+            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
+                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
+                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
+                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
+                </p>
+                <ul id="api-list-orders" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
+                    <!-- API 목록이 동적으로 생성됩니다 -->
+                </ul>
+                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
+                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
+                </p>
+            </div>
+
+            <!-- 주문 목록 -->
+            <div class="card">
+                <div class="card-header">내 주문 목록</div>
+                <div class="card-body">
+                    <div id="order-list-loading" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        주문 목록을 불러오는 중...
+                    </div>
+                    <div id="order-list-container" style="display: none;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border); text-align: left;">
+                                    <th style="padding: 0.75rem;">주문 번호</th>
+                                    <th style="padding: 0.75rem;">주문 ID</th>
+                                    <th style="padding: 0.75rem;">금액</th>
+                                    <th style="padding: 0.75rem;">포인트</th>
+                                    <th style="padding: 0.75rem;">상태</th>
+                                    <th style="padding: 0.75rem; text-align: center;">작업</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-list-body">
+                                <!-- 주문 목록이 여기에 렌더링됩니다 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="order-list-empty" style="display: none; text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        주문 내역이 없습니다. <a href="/pages/shop" style="color: var(--primary);">상점</a>에서 주문을 생성해주세요.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 모드 A: PortOne SDK -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">🔵 모드 A (PortOne SDK)</div>
+                <div class="card-subtitle">클라이언트에서 직접 PortOne 결제창 열기</div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        위 주문 목록에서 <strong>"결제하기"</strong> 버튼을 클릭하면 자동으로 진행됩니다:
+                        <ol style="margin: 1rem 0 0 1.5rem; line-height: 1.8;">
+                            <li>서버에 결제 시작 요청 (PENDING 상태로 DB 저장)</li>
+                            <li>PortOne 결제창 열기</li>
+                            <li>사용자 결제 진행</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 모드 B: API 수동 테스트 -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">🟢 모드 B (API 수동 테스트)</div>
+                <div class="card-subtitle">백엔드 API 엔드포인트 직접 호출</div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        결제 확정/취소 API를 직접 테스트하려면 결제 ID를 입력하세요.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">결제 ID</label>
+                        <input type="text" id="manual-payment-id" class="form-input" placeholder="payment_xyz">
+                    </div>
+
+                    <div class="btn-group" style="margin-top: 1rem;">
+                        <button class="btn btn-success" onclick="manualConfirmPayment()">
+                            ✅ 결제 확정
+                        </button>
+                        <button class="btn btn-danger" onclick="manualCancelPayment()">
+                            ❌ 결제 취소/환불
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 사용 안내 -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">📋 사용 안내</div>
+                <div class="card-body">
+                    <h4 style="margin-bottom: 0.5rem;">일반 사용자 흐름:</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 2;">
+                        <li><a href="/pages/shop" style="color: var(--primary);">상점</a>에서 주문 생성</li>
+                        <li>위 주문 목록에서 "결제하기" 버튼 클릭</li>
+                        <li>PortOne 결제창에서 결제 진행</li>
+                    </ol>
+
+                    <h4 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">개발자 테스트 (모드 B):</h4>
+                    <ol style="margin-left: 1.5rem; line-height: 2;">
+                        <li>결제 완료 후 받은 결제 ID 입력</li>
+                        <li>"결제 확정" 또는 "결제 취소/환불" 버튼으로 API 테스트</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 현재 사용자 정보
+        let currentUser = null;
+        let orders = [];
+
+        // API 목록 동적 생성
+        async function populateApiList() {
+            const apiListElement = document.getElementById('api-list-orders');
+            if (!apiListElement) return;
+
+            try {
+                // config 로드 대기
+                const config = await getConfig();
+                const endpoints = config?.api?.endpoints;
+
+                if (!endpoints) {
+                    apiListElement.innerHTML = '';
+                    return;
+                }
+
+                // orders.html에 필요한 API들
+                const requiredApis = ['list-orders', 'create-payment', 'confirm-payment', 'cancel-payment'];
+                const apiItems = [];
+
+                requiredApis.forEach(apiKey => {
+                    const apiConfig = endpoints[apiKey];
+                    if (apiConfig && apiConfig.url) {
+                        const method = apiConfig.method || 'GET';
+                        const description = apiConfig.description || '';
+                        apiItems.push(`<li><code>${method} ${apiConfig.url}</code> - ${description}</li>`);
+                    }
+                });
+
+                // API가 정의되어 있으면 표시, 없으면 빈 문자열
+                apiListElement.innerHTML = apiItems.join('');
+            } catch (error) {
+                console.error('API 목록 로드 실패:', error);
+                apiListElement.innerHTML = '';
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            // API 목록 동적 생성 (비동기)
+            populateApiList();
+
+
+            await loadCurrentUser();
+            await loadOrders();
+        });
+
+        // 사용자 정보 로드
+        async function loadCurrentUser() {
+            try {
+                currentUser = await makeApiRequest('get-current-user', {
+                });
+
+                if (!validateApiResponse('get-current-user', currentUser)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to load user info:', error);
+                currentUser = null;
+            }
+        }
+
+        // 주문 목록 로드
+        async function loadOrders() {
+            const loadingEl = document.getElementById('order-list-loading');
+            const containerEl = document.getElementById('order-list-container');
+            const emptyEl = document.getElementById('order-list-empty');
+
+            try {
+                const result = await makeApiRequest('list-orders', {
+                });
+
+                // YML 스키마 기반 자동 검증
+                if (!validateApiResponse('list-orders', result)) {
+                    throw new Error('API 응답 형식이 올바르지 않습니다.');
+                }
+
+                orders = result;
+                loadingEl.style.display = 'none';
+
+                if (orders.length === 0) {
+                    emptyEl.style.display = 'block';
+                } else {
+                    containerEl.style.display = 'block';
+                    renderOrderList();
+                }
+            } catch (error) {
+                console.error('Failed to load orders:', error);
+                loadingEl.innerHTML = '<span style="color: var(--danger);">주문 목록을 불러오는데 실패했습니다.</span>';
+            }
+        }
+
+        // 주문 목록 렌더링
+        function renderOrderList() {
+            const tbody = document.getElementById('order-list-body');
+            tbody.innerHTML = '';
+
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border)';
+
+                // 상태에 따른 스타일
+                const statusStyle = getStatusStyle(order.status);
+
+                // 포인트 정보 구성
+                const usedPoints = order.usedPoints || 0;
+                const earnedPoints = order.earnedPoints || 0;
+                const finalAmount = order.finalAmount != null ? order.finalAmount : order.totalAmount;
+
+                let pointsDisplay = '';
+                if (usedPoints > 0 || earnedPoints > 0) {
+                    pointsDisplay = '<div style="font-size: 0.875rem;">';
+                    if (usedPoints > 0) {
+                        pointsDisplay += `<div style="color: var(--danger);">-${usedPoints.toLocaleString()}P</div>`;
+                    }
+                    if (earnedPoints > 0) {
+                        pointsDisplay += `<div style="color: var(--success);">+${earnedPoints.toLocaleString()}P</div>`;
+                    }
+                    pointsDisplay += '</div>';
+                } else {
+                    pointsDisplay = '<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>';
+                }
+
+                tr.innerHTML = `
+                    <td style="padding: 0.75rem; font-weight: 600;">${order.orderNumber}</td>
+                    <td style="padding: 0.75rem; font-family: monospace; font-size: 0.875rem; color: var(--text-secondary);">${order.orderId}</td>
+                    <td style="padding: 0.75rem;">
+                        <div style="font-weight: 600;">${order.totalAmount.toLocaleString()}원</div>
+                        ${usedPoints > 0 ? `<div style="font-size: 0.75rem; color: var(--text-secondary);">실결제: ${finalAmount.toLocaleString()}원</div>` : ''}
+                    </td>
+                    <td style="padding: 0.75rem;">
+                        ${pointsDisplay}
+                    </td>
+                    <td style="padding: 0.75rem;">
+                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.875rem; font-weight: 500; ${statusStyle}">
+                            ${getStatusText(order.status)}
+                        </span>
+                    </td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        ${order.status === 'PENDING' ?
+                            `<button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="payOrder(${order.orderId}, ${finalAmount})">
+                                💳 결제하기
+                            </button>` :
+                            `<span style="color: var(--text-secondary); font-size: 0.875rem;">-</span>`
+                        }
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 주문 결제하기
+        async function payOrder(orderId, totalAmount) {
+            if (!currentUser) {
+                showNotification('⚠️ 사용자 정보를 먼저 로드해주세요', 'warning');
+                return;
+            }
+
+            // 해당 주문 찾기
+            const order = orders.find(o => o.orderId == orderId);
+            if (!order) {
+                showNotification('⚠️ 주문을 찾을 수 없습니다', 'error');
+                return;
+            }
+
+            try {
+                const paymentData = {
+                    orderId: orderId,
+                    orderName: `주문 ${order.orderNumber}`,  // 주문 번호로 표시
+                    totalAmount: totalAmount,
+                    currency: 'KRW',
+                    payMethod: 'CARD',
+                    customer: {
+                        customerId: String(currentUser?.customerUid || currentUser?.id || 'CUST_UNKNOWN'),
+                        fullName: currentUser?.name || '홍길동',  // PortOne에 전달할 고객 UID
+                        phoneNumber: currentUser.phone || '01012345678',  // KG 이니시스 필수
+                        email: currentUser.email
+                    }
+                };
+
+                const result = await openPortOnePayment(paymentData);
+
+                if (result.paymentId) {
+                    // 결제 완료 후 모드 B에 자동 입력
+                    document.getElementById('manual-payment-id').value = result.paymentId;
+
+                    showNotification('💳 결제 완료! 아래에서 결제 확정/취소를 테스트할 수 있습니다.', 'success');
+
+                    // 주문 목록 새로고침
+                    await loadOrders();
+                }
+            } catch (error) {
+                console.error('Payment failed:', error);
+            }
+        }
+
+        // 모드 B: 수동 결제 확정
+        async function manualConfirmPayment() {
+            const paymentId = document.getElementById('manual-payment-id').value.trim();
+
+            if (!paymentId) {
+                showNotification('⚠️ 결제 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            try {
+                await confirmPaymentTemplate(paymentId);
+                await loadOrders(); // 주문 목록 새로고침
+            } catch (error) {
+                console.error('Failed to confirm payment:', error);
+            }
+        }
+
+        // 모드 B: 수동 결제 취소
+        async function manualCancelPayment() {
+            const paymentId = document.getElementById('manual-payment-id').value.trim();
+
+            if (!paymentId) {
+                showNotification('⚠️ 결제 ID를 입력해주세요', 'warning');
+                return;
+            }
+
+            if (!confirm('정말 이 결제를 취소하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                await cancelPaymentTemplate(paymentId, 'Customer request');
+                await loadOrders(); // 주문 목록 새로고침
+            } catch (error) {
+                console.error('Failed to cancel payment:', error);
+            }
+        }
+
+        // 상태 스타일 반환
+        function getStatusStyle(status) {
+            const styles = {
+                'PENDING': 'background: #FEF3C7; color: #92400E;',
+                'PAID': 'background: #D1FAE5; color: #065F46;',
+                'CANCELLED': 'background: #FEE2E2; color: #991B1B;',
+                'SHIPPED': 'background: #DBEAFE; color: #1E40AF;',
+                'DELIVERED': 'background: #E0E7FF; color: #3730A3;'
+            };
+            return styles[status] || 'background: #F3F4F6; color: #374151;';
+        }
+
+        // 상태 텍스트 반환
+        function getStatusText(status) {
+            const texts = {
+                'PENDING': '결제 대기',
+                'PAID': '결제 완료',
+                'CANCELLED': '취소됨',
+                'SHIPPED': '배송중',
+                'DELIVERED': '배송 완료'
+            };
+            return texts[status] || status;
+        }
+    </script>
+</body>
+</html>
