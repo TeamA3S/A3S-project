@@ -31,7 +31,7 @@ public class WebhookService {
             String eventType = root.path("type").asText(null);
             String portOneId = root.path("data").path("paymentId").asText(null);
             String eventStatus = readEventStatus(root);
-            String webhookUuid = root.path("data").path("paymentId").asText(null);
+            String webhookUuid = root.path("data").path("transactionId").asText(null);
 
 
 
