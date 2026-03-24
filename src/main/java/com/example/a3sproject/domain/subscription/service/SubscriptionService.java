@@ -68,12 +68,12 @@ public class SubscriptionService {
 
         CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(user.getId(), request);
 
-        // 즉시 결제
-        CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
-                OffsetDateTime.now(),
-                OffsetDateTime.now().plusMonths(1)
-        );
-        createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
+//        // 즉시 결제
+//        CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
+//                OffsetDateTime.now(),
+//                OffsetDateTime.now().plusMonths(1)
+//        );
+//        createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
 
         return response;
     }
