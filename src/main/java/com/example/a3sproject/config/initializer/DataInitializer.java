@@ -5,6 +5,9 @@ import com.example.a3sproject.domain.membership.enums.MembershipGrade;
 import com.example.a3sproject.domain.membership.repository.MembershipRepository;
 import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.plan.repository.PlanRepository;
+import com.example.a3sproject.domain.point.entity.PointTransaction;
+import com.example.a3sproject.domain.point.enums.PointTransactionType;
+import com.example.a3sproject.domain.point.repository.PointRepository;
 import com.example.a3sproject.domain.product.entity.Product;
 import com.example.a3sproject.domain.product.enums.ProductCategory;
 import com.example.a3sproject.domain.product.enums.ProductStatus;
@@ -18,6 +21,9 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -29,6 +35,7 @@ public class DataInitializer implements ApplicationRunner {
     private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
     private final PlanRepository planRepository;
+    private final PointRepository pointRepository;
 
     @Override
     @Transactional
@@ -121,6 +128,19 @@ public class DataInitializer implements ApplicationRunner {
 
             // 앱 실행하면 데이터 밀어넣기 (더미데이터)
             productRepository.saveAll(List.of(p1, p2, p3, p4, p5));
+
+            if (pointRepository.count() == 0) {
+                PointTransaction pointTransaction = PointTransaction.of(
+                        2L,
+                        1L,
+                        200,
+                        200,
+                        PointTransactionType.EARN,
+                        200,
+                        LocalDateTime.now().plusSeconds(1)
+                );
+                pointRepository.save(pointTransaction);
+            }
         }
     }
 }
