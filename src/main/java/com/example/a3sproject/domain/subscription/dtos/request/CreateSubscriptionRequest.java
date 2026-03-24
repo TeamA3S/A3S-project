@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record CreateSubscriptionRequest(
         String customerUid,
-        @JsonProperty("planId")
-        String planUuid,
+//        @JsonProperty("planId")
+        String planId,
         String billingKey,
         int amount
 ) {

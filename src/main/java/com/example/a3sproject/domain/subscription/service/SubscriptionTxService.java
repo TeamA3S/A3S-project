@@ -32,7 +32,7 @@ public class SubscriptionTxService {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.USER_NOT_FOUND)
         );
-        Plan plan = planRepository.findByPlanUuid(request.planUuid()).orElseThrow(
+        Plan plan = planRepository.findByPlanUuid(request.planId()).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.PLAN_NOT_FOUND)
         );
 
@@ -41,7 +41,7 @@ public class SubscriptionTxService {
                 user,
                 request.billingKey(),
                 request.customerUid(),
-                PgProvider.TOSS_PAYMENTS, //Todo : 확인 필요
+                PgProvider.TOSS_PAYMENTS,
                 true,
                 PaymentMethodStatus.ACTIVE
         );
