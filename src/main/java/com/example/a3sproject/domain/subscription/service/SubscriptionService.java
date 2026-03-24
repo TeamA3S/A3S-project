@@ -3,6 +3,8 @@ package com.example.a3sproject.domain.subscription.service;
 import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.paymentMethod.entity.PaymentMethod;
 import com.example.a3sproject.domain.paymentMethod.repository.PaymentMethodRepository;
+import com.example.a3sproject.domain.plan.entity.Plan;
+import com.example.a3sproject.domain.plan.repository.PlanRepository;
 import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.portone.dto.request.BillingKeyPaymentRequest;
 import com.example.a3sproject.domain.portone.dto.response.BillingKeyPaymentResponse;
@@ -45,9 +47,10 @@ public class SubscriptionService {
     private final SubscriptionTxService subscriptionTxService;
     private final PaymentMethodRepository paymentMethodRepository;
     private final PortOneProperties portOneProperties;
+    private final PlanRepository planRepository;
 
 
-    public CreateSubscriptionResponse createSubscription(long userId, CreateSubscriptionRequest request) {
+    public CreateSubscriptionResponse createSubscription(User user, CreateSubscriptionRequest request) {
         // 1. PortOne API로 billingKey 유효성 검증
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
 
@@ -55,19 +58,22 @@ public class SubscriptionService {
         if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
+        Plan plan = planRepository.findByPlanUuid(request.planId()).orElseThrow(
+                () -> new SubscriptionException(ErrorCode.PLAN_NOT_FOUND)
+        );
         // 중복 검증
-        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
+        if (subscriptionRepository.existsByUserAndPlanAndStatus(user, plan, SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
-        CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(userId, request);
+        CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(user.getId(), request);
 
         // 즉시 결제
         CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
                 OffsetDateTime.now(),
                 OffsetDateTime.now().plusMonths(1)
         );
-        createBilling(userId, response.subscriptionUuid(), firstBillingRequest);
+        createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
 
         return response;
     }

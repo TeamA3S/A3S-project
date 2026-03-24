@@ -1,7 +1,9 @@
 package com.example.a3sproject.domain.subscription.repository;
 
+import com.example.a3sproject.domain.plan.entity.Plan;
 import com.example.a3sproject.domain.subscription.entity.Subscription;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
+import com.example.a3sproject.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.OffsetDateTime;
@@ -16,7 +18,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     );
     Optional<Subscription> findBySubscriptionUuid(String subscriptionId);
 
-    boolean existsByUserIdAndPlanIdAndStatus(long userId, String planId, SubscriptionStatus subscriptionStatus);
+    boolean existsByUserAndPlanAndStatus(User user, Plan plan, SubscriptionStatus subscriptionStatus);
 
     // 본인 구독인지 확인 메서드용
     Optional<Subscription> findBySubscriptionUuidAndUser_Id(String subscriptionUuid, Long userId);

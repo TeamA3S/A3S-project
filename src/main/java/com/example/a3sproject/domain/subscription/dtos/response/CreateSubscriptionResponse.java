@@ -3,8 +3,8 @@ package com.example.a3sproject.domain.subscription.dtos.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record CreateSubscriptionResponse(
-        @JsonProperty("subscriptionId")
-        String subscriptionUuid
+//        @JsonProperty("subscriptionId")
+        String subscriptionId
 ) {
 }
 //name: subscriptionId
