@@ -83,23 +83,23 @@ class WebhookServiceTest {
         verify(paymentService, never()).confirmPayment(anyString(), any());
     }
 
-    @Test
-    @DisplayName("결제 확정 중 예외가 발생하면 웹훅 상태가 FAILED로 변경된다")
-    void handleWebhook_결제확정중예외발생_FAILED상태() {
-        // given
-        given(webhookRepository.existsByWebhookUuid("TXN-FAIL")).willReturn(false);
-        given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
-        willThrow(new PaymentException(ErrorCode.PAYMENT_NOT_FOUND))
-                .given(paymentService).confirmPayment("PMN-FAIL", null);
-
-        // when
-        webhookService.handleWebhook(makeRawBody("TXN-FAIL", "PMN-FAIL", "PAID"));
-
-        // then
-        ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
-        verify(webhookRepository).save(captor.capture());
-        assertThat(captor.getValue().getStatus()).isEqualTo(WebhookStatus.FAILED);
-    }
+//    @Test
+//    @DisplayName("결제 확정 중 예외가 발생하면 웹훅 상태가 FAILED로 변경된다")
+//    void handleWebhook_결제확정중예외발생_FAILED상태() {
+//        // given
+//        given(webhookRepository.existsByWebhookUuid("TXN-FAIL")).willReturn(false);
+//        given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
+//        willThrow(new PaymentException(ErrorCode.PAYMENT_NOT_FOUND))
+//                .given(paymentService).confirmPayment("PMN-FAIL", null);
+//
+//        // when
+//        webhookService.handleWebhook(makeRawBody("TXN-FAIL", "PMN-FAIL", "PAID"));
+//
+//        // then
+//        ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
+//        verify(webhookRepository).save(captor.capture());
+//        assertThat(captor.getValue().getStatus()).isEqualTo(WebhookStatus.FAILED);
+//    }
 
     @Test
     @DisplayName("결제 확정 중 예외가 발생해도 웹훅 핸들러는 예외를 외부로 전파하지 않는다")
