@@ -115,7 +115,7 @@ public class SubscriptionService {
 
         for (SubscriptionBilling billing : history) {
             GetBillingResponse response = new GetBillingResponse(
-                    billing.getBillingUuid(),
+                    billing.getBillingHistoryUuid(),
                     billing.getPeriodStart(),
                     billing.getPeriodEnd(),
                     billing.getAmount(),
