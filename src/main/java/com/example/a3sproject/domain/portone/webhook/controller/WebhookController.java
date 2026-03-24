@@ -21,6 +21,7 @@ public class WebhookController {
     ) {
         try {
             webhookService.handleWebhook(webhookUuid, request.portOneId(), request.status());
+            log.info(webhookUuid);
         } catch (Exception e) {
             log.error("웹훅 처리 실패 webhookId: {}, error: {}", webhookUuid, e.getMessage());
             // 실패해도 200 OK 반환! (PortOne 재전송 방지)
