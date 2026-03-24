@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.subscription.dtos.request;
+package com.example.a3sproject.domain.subscription.dto.request;
 
 
 import java.time.OffsetDateTime;

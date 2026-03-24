@@ -1,6 +1,4 @@
-package com.example.a3sproject.domain.subscription.dtos.request;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+package com.example.a3sproject.domain.subscription.dto.request;
 
 public record CreateSubscriptionRequest(
         String customerUid,
