@@ -162,12 +162,12 @@ public class SubscriptionService {
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 6. 성공 시 처리
-                if (SubscriptionBillingStatus.COMPLETED.equals(response.getStatus())) {
+                if ("PAID".equals(response.getStatus())) {
                     // 6-1. 구독 청구 이력 저장
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
                             subscription.getAmount(),
-                            SubscriptionBillingStatus.COMPLETED,
+                            SubscriptionBillingStatus.PAID,
                             paymentId,
 //                            response.getPaidAt(),
                             subscription.getCurrentPeriodEnd(),
@@ -229,14 +229,14 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
-            if (!SubscriptionBillingStatus.COMPLETED.equals(response.getStatus())) {
+            if (!"PAID".equals(response.getStatus())) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
             // 성공 시 구독 청구에 저장
             SubscriptionBilling subscriptionBillingSuccess = new SubscriptionBilling(
                     subscription,
                     amount,
-                    SubscriptionBillingStatus.COMPLETED,
+                    SubscriptionBillingStatus.PAID,
                     paymentId,
                     request.periodStart(),
                     request.periodEnd(),
@@ -249,7 +249,7 @@ public class SubscriptionService {
                     savedBilling.getId().toString(),
                     paymentId,
                     amount,
-                    SubscriptionBillingStatus.COMPLETED
+                    SubscriptionBillingStatus.PAID
             );
         } catch (PaymentException e) {
             throw e;

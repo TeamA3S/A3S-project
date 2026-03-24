@@ -54,7 +54,7 @@ public class SubscriptionBilling extends BaseEntity {
     }
 
     public void AutoSubscriptionBillingSuccess() {
-        this.status = SubscriptionBillingStatus.COMPLETED;
+        this.status = SubscriptionBillingStatus.PAID;
         this.periodStart = OffsetDateTime.now();
         this.periodEnd = OffsetDateTime.now().plusMonths(1);
     }

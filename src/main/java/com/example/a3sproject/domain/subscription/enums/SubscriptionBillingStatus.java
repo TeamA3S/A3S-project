@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum SubscriptionBillingStatus {
-    COMPLETED("결제 완료"),
+    PAID("결제 완료"),
     FAILED("결제 실패"),
     PENDING("결제 대기");
 
