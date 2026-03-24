@@ -19,7 +19,7 @@ public class PlanService {
                 .stream()
                 .filter(Plan::isActive)
                 .map(plan -> new GetPlanResponseDto(
-                        String.valueOf(plan.getId()),
+                        plan.getPlanUuid(),
                         plan.getName(),
                         plan.getAmount(),
                         plan.getBillingCycle()

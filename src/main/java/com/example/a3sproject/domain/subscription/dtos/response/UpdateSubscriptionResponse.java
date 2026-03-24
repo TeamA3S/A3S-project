@@ -1,10 +1,13 @@
 package com.example.a3sproject.domain.subscription.dtos.response;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record UpdateSubscriptionResponse(
         boolean success,
-        String subscriptionId,
+
+        @JsonProperty("subscriptionId")
+        String subscriptionUuid,
         SubscriptionStatus status
 ) {
 }

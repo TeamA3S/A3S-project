@@ -1,7 +1,10 @@
 package com.example.a3sproject.domain.subscription.dtos.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record CreateSubscriptionResponse(
-        String subscriptionId
+        @JsonProperty("subscriptionId")
+        String subscriptionUuid
 ) {
 }
 //name: subscriptionId
