@@ -1,7 +1,7 @@
-package com.example.a3sproject.domain.refunds.entity;
+package com.example.a3sproject.domain.refund.entity;
 
 import com.example.a3sproject.domain.payment.entity.Payment;
-import com.example.a3sproject.domain.refunds.enums.RefundStatus;
+import com.example.a3sproject.domain.refund.enums.RefundStatus;
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

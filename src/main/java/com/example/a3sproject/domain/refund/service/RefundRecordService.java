@@ -1,8 +1,8 @@
-package com.example.a3sproject.domain.refunds.service;
+package com.example.a3sproject.domain.refund.service;
 
 import com.example.a3sproject.domain.payment.entity.Payment;
-import com.example.a3sproject.domain.refunds.entity.Refund;
-import com.example.a3sproject.domain.refunds.repository.RefundRepository;
+import com.example.a3sproject.domain.refund.entity.Refund;
+import com.example.a3sproject.domain.refund.repository.RefundRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.refunds.controller;
+package com.example.a3sproject.domain.refund.controller;
 
 import com.example.a3sproject.domain.membership.entity.Membership;
 import com.example.a3sproject.domain.membership.enums.MembershipGrade;

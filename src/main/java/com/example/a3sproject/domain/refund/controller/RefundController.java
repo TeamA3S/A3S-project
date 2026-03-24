@@ -1,8 +1,8 @@
-package com.example.a3sproject.domain.refunds.controller;
+package com.example.a3sproject.domain.refund.controller;
 
-import com.example.a3sproject.domain.refunds.dto.request.RefundRequestDto;
-import com.example.a3sproject.domain.refunds.dto.response.RefundResponseDto;
-import com.example.a3sproject.domain.refunds.service.RefundService;
+import com.example.a3sproject.domain.refund.dto.request.RefundRequestDto;
+import com.example.a3sproject.domain.refund.dto.response.RefundResponseDto;
+import com.example.a3sproject.domain.refund.service.RefundService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;

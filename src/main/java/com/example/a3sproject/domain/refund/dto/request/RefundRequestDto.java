@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.refunds.dto.request;
+package com.example.a3sproject.domain.refund.dto.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

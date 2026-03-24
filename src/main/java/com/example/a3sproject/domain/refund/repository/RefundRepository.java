@@ -1,8 +1,8 @@
-package com.example.a3sproject.domain.refunds.repository;
+package com.example.a3sproject.domain.refund.repository;
 
 import com.example.a3sproject.domain.payment.entity.Payment;
-import com.example.a3sproject.domain.refunds.entity.Refund;
-import com.example.a3sproject.domain.refunds.enums.RefundStatus;
+import com.example.a3sproject.domain.refund.entity.Refund;
+import com.example.a3sproject.domain.refund.enums.RefundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

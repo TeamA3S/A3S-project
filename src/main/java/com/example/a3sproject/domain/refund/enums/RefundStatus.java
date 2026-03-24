@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.refunds.enums;
+package com.example.a3sproject.domain.refund.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

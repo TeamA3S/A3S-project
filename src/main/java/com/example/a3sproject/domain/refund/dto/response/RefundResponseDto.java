@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.refunds.dto.response;
+package com.example.a3sproject.domain.refund.dto.response;
 
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.payment.enums.PaidStatus;

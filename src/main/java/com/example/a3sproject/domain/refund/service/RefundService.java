@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.refunds.service;
+package com.example.a3sproject.domain.refund.service;
 
 import com.example.a3sproject.config.PortOneProperties;
 import com.example.a3sproject.domain.membership.entity.Membership;
@@ -16,10 +16,10 @@ import com.example.a3sproject.domain.point.service.PointService;
 import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.portone.dto.request.PortOneCancelPaymentRequest;
 import com.example.a3sproject.domain.portone.dto.response.PortOneCancelPaymentResponse;
-import com.example.a3sproject.domain.refunds.dto.request.RefundRequestDto;
-import com.example.a3sproject.domain.refunds.dto.response.RefundResponseDto;
-import com.example.a3sproject.domain.refunds.enums.RefundStatus;
-import com.example.a3sproject.domain.refunds.repository.RefundRepository;
+import com.example.a3sproject.domain.refund.dto.request.RefundRequestDto;
+import com.example.a3sproject.domain.refund.dto.response.RefundResponseDto;
+import com.example.a3sproject.domain.refund.enums.RefundStatus;
+import com.example.a3sproject.domain.refund.repository.RefundRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.RefundException;
 import lombok.RequiredArgsConstructor;
