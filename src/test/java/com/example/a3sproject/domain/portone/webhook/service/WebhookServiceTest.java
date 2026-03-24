@@ -46,7 +46,7 @@ class WebhookServiceTest {
         given(webhookRepository.save(any(Webhook.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        webhookService.handleWebhook("WH-001", "PMN-001", "PAID");
+        webhookService.handleWebhook("{data:{WH-001, PMN-001, PAID}}");
 
         // then: 웹훅 저장과 결제 확정이 순서대로 호출되고 상태가 PROCESSED로 변경된다
         ArgumentCaptor<Webhook> webhookCaptor = ArgumentCaptor.forClass(Webhook.class);
@@ -82,7 +82,7 @@ class WebhookServiceTest {
                 .given(paymentService).confirmPayment("PMN-FAIL", null);
 
         // when
-        webhookService.handleWebhook("WH-FAIL", "PMN-FAIL", "PAID");
+        webhookService.handleWebhook("{data:{WH-FAIL, PMN-FAIL, PAID}}");
 
         // then: 예외가 외부로 전파되지 않고 웹훅 상태만 FAILED로 변경된다
         ArgumentCaptor<Webhook> webhookCaptor = ArgumentCaptor.forClass(Webhook.class);
@@ -103,7 +103,7 @@ class WebhookServiceTest {
 
         // when & then: handleWebhook 호출 시 어떤 예외도 발생하지 않는다
         org.assertj.core.api.Assertions.assertThatNoException()
-                .isThrownBy(() -> webhookService.handleWebhook("WH-ERR", "PMN-ERR", "PAID"));
+                .isThrownBy(() -> webhookService.handleWebhook("{data:{WH-ERR, PMN-ERR, PAID}}"));
     }
 
     @Test
@@ -114,7 +114,7 @@ class WebhookServiceTest {
         given(webhookRepository.save(any(Webhook.class))).willThrow(new RuntimeException("DB 저장 실패"));
 
         // when
-        webhookService.handleWebhook("WH-SAVE-FAIL", "PMN-001", "PAID");
+        webhookService.handleWebhook("{data:{WH-SAVE-FAIL, PMN-001, PAID}}");
 
         // then: 웹훅 저장이 실패했으므로 결제 확정은 호출되지 않는다
         verify(paymentService, never()).confirmPayment(anyString(), any());
@@ -128,7 +128,7 @@ class WebhookServiceTest {
         given(webhookRepository.save(any(Webhook.class))).willAnswer(invocation -> invocation.getArgument(0));
 
         // when
-        webhookService.handleWebhook("WH-FIELD", "PMN-FIELD-001", "VIRTUAL_ACCOUNT_ISSUED");
+        webhookService.handleWebhook("{data:{WH-FIELD, PMN-FIELD-001, VIRTUAL_ACCOUNT_ISSUED}}");
 
         // then: 저장된 웹훅 엔티티의 모든 필드가 수신된 값과 정확히 일치한다
         ArgumentCaptor<Webhook> webhookCaptor = ArgumentCaptor.forClass(Webhook.class);
