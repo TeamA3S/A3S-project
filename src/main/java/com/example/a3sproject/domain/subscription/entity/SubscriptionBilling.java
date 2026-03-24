@@ -75,4 +75,8 @@ public class SubscriptionBilling extends BaseEntity {
         this.failureMessage = failureMessage;
         this.billingHistoryUuid = GenerateCodeUuid.generateCodeUuid("BIH");
     }
+
+    public void markAsPaid() {
+        this.status = SubscriptionBillingStatus.PAID;
+    }
 }
