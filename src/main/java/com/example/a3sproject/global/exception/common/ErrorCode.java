@@ -56,6 +56,7 @@ public enum ErrorCode {
     //Subscription
     SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 구독을 찾을 수 없습니다."),
     SUBSCRIPTION_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 구독중인 플랜입니다."),
+    SUBSCRIPTION_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "이미 해지되었거나 종료된 구독입니다."),
     HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "기록을 찾을 수 없습니다."),
 
     // Common

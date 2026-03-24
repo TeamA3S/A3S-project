@@ -71,4 +71,10 @@ public class Subscription extends BaseEntity {
     public void markAsPastDue() {
         this.status = SubscriptionStatus.PAST_DUE;
     }
+
+    // 구독 해지
+    public void cancel() {
+        this.status = SubscriptionStatus.CANCELLED;
+        this.canceledAt = OffsetDateTime.now();
+    }
 }
