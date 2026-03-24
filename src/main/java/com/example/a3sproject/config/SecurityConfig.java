@@ -65,7 +65,7 @@ public class SecurityConfig {
                             "/api/users/signUp",
                             "/api/auth/reissue"
                     ).permitAll()
-
+                    .requestMatchers("/api/payments/webhook").permitAll()
                     // 헬스체크 허용
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
