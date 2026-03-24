@@ -2,10 +2,13 @@ package com.example.a3sproject.domain.portone.webhook.controller;
 
 import com.example.a3sproject.domain.portone.webhook.dto.request.WebhookRequest;
 import com.example.a3sproject.domain.portone.webhook.service.WebhookService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
 
 @Slf4j
 @RestController
@@ -16,14 +19,13 @@ public class WebhookController {
 
     @PostMapping
     public ResponseEntity<Void> handleWebhook(
-            @RequestHeader("webhook-id") String webhookUuid,
-            @RequestBody WebhookRequest request
+            @RequestBody String rawBody
     ) {
         try {
-            webhookService.handleWebhook(webhookUuid, request.portOneId(), request.status());
-            log.info(webhookUuid);
+            log.info("rawBody: {}", rawBody);
+            webhookService.handleWebhook(rawBody);
         } catch (Exception e) {
-            log.error("웹훅 처리 실패 webhookId: {}, error: {}", webhookUuid, e.getMessage());
+            log.error("웹훅 처리 실패 rawBody: {}, error: {}", rawBody, e.getMessage());
             // 실패해도 200 OK 반환! (PortOne 재전송 방지)
         }
         return ResponseEntity.ok().build();

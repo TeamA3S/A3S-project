@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface WebhookRepository extends JpaRepository<Webhook, Long> {
     boolean existsByWebhookUuidAndStatus(String webhookUuid, WebhookStatus Status);
 
-    Optional<Webhook> findByWebhookUuid(String webhookUuid);
+    boolean existsByWebhookUuid(String webhookUuid);
 }

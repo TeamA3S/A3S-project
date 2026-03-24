@@ -8,14 +8,14 @@ import com.example.a3sproject.domain.plan.repository.PlanRepository;
 import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.portone.dto.request.BillingKeyPaymentRequest;
 import com.example.a3sproject.domain.portone.dto.response.BillingKeyPaymentResponse;
-import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
+import com.example.a3sproject.domain.subscription.dto.request.CreateBillingRequest;
 import com.example.a3sproject.domain.portone.dto.response.ValidateBillingKeyResponse;
-import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
-import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.GetAllBillingsResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.GetBillingResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dto.request.CreateSubscriptionRequest;
+import com.example.a3sproject.domain.subscription.dto.response.CreateBillingResponse;
+import com.example.a3sproject.domain.subscription.dto.response.CreateSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dto.response.GetAllBillingsResponse;
+import com.example.a3sproject.domain.subscription.dto.response.GetBillingResponse;
+import com.example.a3sproject.domain.subscription.dto.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.entity.Subscription;
 import com.example.a3sproject.domain.subscription.entity.SubscriptionBilling;
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
@@ -115,7 +115,7 @@ public class SubscriptionService {
 
         for (SubscriptionBilling billing : history) {
             GetBillingResponse response = new GetBillingResponse(
-                    billing.getBillingUuid(),
+                    billing.getBillingHistoryUuid(),
                     billing.getPeriodStart(),
                     billing.getPeriodEnd(),
                     billing.getAmount(),
@@ -162,7 +162,7 @@ public class SubscriptionService {
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 6. 성공 시 처리
-                if ("PAID".equals(response.getStatus())) {
+                if ("COMPLETED".equals(response.getStatus())) {
                     // 6-1. 구독 청구 이력 저장
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
@@ -229,7 +229,7 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
-            if (!"PAID".equals(response.getStatus())) {
+            if (!"COMPLETED".equals(response.getStatus())) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
             // 성공 시 구독 청구에 저장

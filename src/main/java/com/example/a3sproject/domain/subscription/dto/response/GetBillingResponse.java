@@ -1,4 +1,4 @@
-package com.example.a3sproject.domain.subscription.dtos.response;
+package com.example.a3sproject.domain.subscription.dto.response;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
 import jakarta.annotation.Nullable;

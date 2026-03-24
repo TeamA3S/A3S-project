@@ -1,13 +1,13 @@
 package com.example.a3sproject.domain.subscription.controller;
 
 
-import com.example.a3sproject.domain.subscription.dtos.request.CreateBillingRequest;
-import com.example.a3sproject.domain.subscription.dtos.request.CreateSubscriptionRequest;
-import com.example.a3sproject.domain.subscription.dtos.request.UpdateSubscriptionRequest;
-import com.example.a3sproject.domain.subscription.dtos.response.CreateBillingResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.CreateSubscriptionResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.GetAllBillingsResponse;
-import com.example.a3sproject.domain.subscription.dtos.response.GetSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dto.request.CreateBillingRequest;
+import com.example.a3sproject.domain.subscription.dto.request.CreateSubscriptionRequest;
+import com.example.a3sproject.domain.subscription.dto.request.UpdateSubscriptionRequest;
+import com.example.a3sproject.domain.subscription.dto.response.CreateBillingResponse;
+import com.example.a3sproject.domain.subscription.dto.response.CreateSubscriptionResponse;
+import com.example.a3sproject.domain.subscription.dto.response.GetAllBillingsResponse;
+import com.example.a3sproject.domain.subscription.dto.response.GetSubscriptionResponse;
 import com.example.a3sproject.domain.subscription.service.SubscriptionService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
