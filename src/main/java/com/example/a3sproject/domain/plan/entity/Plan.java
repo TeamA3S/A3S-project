@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.plan.entity;
 
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.entity.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

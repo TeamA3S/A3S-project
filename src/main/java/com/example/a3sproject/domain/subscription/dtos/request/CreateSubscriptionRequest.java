@@ -1,8 +1,11 @@
 package com.example.a3sproject.domain.subscription.dtos.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record CreateSubscriptionRequest(
         String customerUid,
-        String planId,
+        @JsonProperty("planId")
+        String planUuid,
         String billingKey,
         int amount
 ) {
