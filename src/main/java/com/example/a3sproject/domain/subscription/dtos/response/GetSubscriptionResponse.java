@@ -1,13 +1,19 @@
 package com.example.a3sproject.domain.subscription.dtos.response;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.OffsetDateTime;
 
 public record GetSubscriptionResponse(
-        String subscriptionId,
+        @JsonProperty("subscriptionId")
+        String subscriptionUuid,
+
         String customerUid,
-        String planId,
+
+        @JsonProperty("planId")
+        String planUuid,
+
         String paymentMethodId,
         SubscriptionStatus status,
         int amount,

@@ -32,7 +32,7 @@ public class SubscriptionTxService {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.USER_NOT_FOUND)
         );
-        Plan plan = planRepository.findByPlanUuid(request.planId()).orElseThrow(
+        Plan plan = planRepository.findByPlanUuid(request.planUuid()).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.PLAN_NOT_FOUND)
         );
 

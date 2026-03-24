@@ -56,7 +56,7 @@ public class SubscriptionService {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
         // 중복 검증
-        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
+        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planUuid(), SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
@@ -67,7 +67,7 @@ public class SubscriptionService {
                 OffsetDateTime.now(),
                 OffsetDateTime.now().plusMonths(1)
         );
-        createBilling(userId, response.subscriptionId(), firstBillingRequest);
+        createBilling(userId, response.subscriptionUuid(), firstBillingRequest);
 
         return response;
     }
