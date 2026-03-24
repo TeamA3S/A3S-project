@@ -2,7 +2,6 @@ package com.example.a3sproject.domain.portone.webhook.service;
 
 import com.example.a3sproject.domain.payment.service.PaymentService;
 import com.example.a3sproject.domain.portone.webhook.entity.Webhook;
-import com.example.a3sproject.domain.portone.webhook.enums.WebhookStatus;
 import com.example.a3sproject.domain.portone.webhook.repository.WebhookRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PortOneException;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
 
 @Slf4j
 @Service
@@ -28,40 +26,43 @@ public class WebhookService {
         Webhook webhook = null;
         try {
             JsonNode root = readJson(rawBody);
-            String eventType = root.path("type").asText(null);
             String portOneId = root.path("data").path("paymentId").asText(null);
             String eventStatus = readEventStatus(root);
             String webhookUuid = root.path("data").path("transactionId").asText(null);
 
-
+            if (webhookUuid == null) {
+                webhookUuid = root.path("data").path("billingKey").asText(null);
+            }
 
             // 1. 중복 검증
-            if (webhookRepository.existsByWebhookUuid(webhookUuid)) {
+            if (webhookUuid != null && webhookRepository.existsByWebhookUuid(webhookUuid)) {
+                log.info("이미 처리된 웹훅입니다: {}", webhookUuid);
                 return;
             }
+
             // 2. Webhook 엔티티 생성 및 저장
             webhook = new Webhook(webhookUuid, portOneId, eventStatus);
             webhookRepository.save(webhook);
 
-            // 3. 결제 확정 처리 (구독 결제는 PaymentService에서 처리하지 않음)
-            if (portOneId != null && (portOneId.startsWith("SUB-") || portOneId.startsWith("BIH-"))) {
-                log.info("구독 결제 웹훅 수신 - 별도 처리 필요 또는 스킵: {}", portOneId);
-                // 구독 관련 추가 로직이 필요하다면 여기에 작성
-            } else {
+            // 3. 결제 확정 처리 (구독 결제 분기 처리)
+            if (portOneId != null && ((portOneId.startsWith("SUB-") || portOneId.startsWith("BIH-")))) {
+                log.info("구독 결제 웹훅은 별도 처리 없이 기록만 합니다: {}", portOneId);
+                // 구독 결제는 SubscriptionService에서 직접 API 응답으로 처리하므로 여기서는 기록만 하고 종료
+            } else if (portOneId != null) {
                 paymentService.confirmPayment(portOneId, null);
             }
 
             // 4. 성공 상태 변경
             webhook.processedWebhook();
-        }catch (Exception e) {
-            // 5. 실패 상태 변경
+        } catch (Exception e) {
+            log.error("웹훅 내부 처리 중 에러 발생: {}", e.getMessage());
             if (webhook != null) {
                 webhook.failedWebhook();
             }
+            // 웹훅은 롤백을 전파하지 않도록 예외를 밖으로 던지지 않거나 별도 처리
         }
     }
 
-    // 웹훅 원본 문자열을 JsonNode로 파싱한다
     private JsonNode readJson(String rawBody) {
         try {
             return objectMapper.readTree(rawBody);
@@ -70,17 +71,11 @@ public class WebhookService {
         }
     }
 
-    // 웹훅 바디에서 status 값을 추출한다
     private String readEventStatus(JsonNode root) {
         String nestedStatus = root.path("data").path("status").asText(null);
         if (nestedStatus != null && !nestedStatus.isBlank()) {
             return nestedStatus;
         }
-
-        String rootStatus = root.path("status").asText(null);
-        if (rootStatus != null && !rootStatus.isBlank()) {
-            return rootStatus;
-        }
-        return null;
+        return root.path("status").asText(null);
     }
 }
