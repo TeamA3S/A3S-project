@@ -53,23 +53,20 @@ public class WebhookService {
             // 4. 이벤트 타입별 분기 처리 (핵심 해결책)
             if (eventType.startsWith("BillingKey")) {
                 log.info("빌링키 관련 웹훅 수신 - 기록 후 종료: {}", eventType);
-
-            } else if (portOneId != null && portOneId.startsWith("SUB-")) {
-                log.info("구독 결제 웹훅 처리 시작: {}", portOneId);
-
+            } else if (portOneId != null && portOneId.startsWith("PMN-")) {
+                // 일반 결제(PMN- 등)만 PaymentService로 전달
+                try {
+                    paymentService.confirmPayment(portOneId, null);
+                } catch (Exception e) {
+                    log.error("일반 결제 웹훅 확정 실패(무시): {}", e.getMessage());
+                }
+            } else if (portOneId != null && !portOneId.isBlank()) {
+                log.info("구독 결제 웹훅 수신 - 기록 후 종료: {}", portOneId);
                 try {
                     // 🔥 구독 결제 성공 처리 로직 호출
                     subscriptionWebhookService.handleSubscriptionPayment(portOneId);
                 } catch (Exception e) {
                     log.error("구독 결제 처리 실패: {}", e.getMessage());
-                }
-
-            } else if (portOneId != null && !portOneId.isBlank()) {
-                // 일반 결제
-                try {
-                    paymentService.confirmPayment(portOneId, null);
-                } catch (Exception e) {
-                    log.error("일반 결제 웹훅 확정 실패(무시): {}", e.getMessage());
                 }
             }
 
