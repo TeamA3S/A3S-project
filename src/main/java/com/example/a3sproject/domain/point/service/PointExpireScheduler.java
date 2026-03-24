@@ -24,7 +24,7 @@ public class PointExpireScheduler {
     private final PointRepository pointRepository;
     private final UserRepository userRepository;
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void expirePoints() {
         log.info("포인트 소멸 스케줄러 시작");
