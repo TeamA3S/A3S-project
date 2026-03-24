@@ -26,48 +26,49 @@ public class WebhookService {
         Webhook webhook = null;
         try {
             JsonNode root = objectMapper.readTree(rawBody);
+            String eventType = root.path("type").asText(""); // 이벤트 타입 추출
             
-            // 1. 데이터 추출 (V2 규격: data 객체 내부 확인)
             JsonNode dataNode = root.path("data");
             String portOneId = dataNode.path("paymentId").asText(null);
             String webhookUuid = dataNode.path("transactionId").asText(null);
             
-            // 만약 transactionId가 없으면 billingKey라도 식별자로 사용
+            // 1. 빌링키 관련 이벤트는 transactionId가 없으므로 billingKey를 ID로 사용
             if (webhookUuid == null || webhookUuid.isBlank()) {
                 webhookUuid = dataNode.path("billingKey").asText("UNKNOWN-" + System.currentTimeMillis());
             }
             
             String eventStatus = readEventStatus(root);
 
-            log.info("웹훅 수신 프로세스 시작 - ID: {}, Status: {}", portOneId, eventStatus);
-
-            // 2. 멱등성 체크 (중복 검증)
+            // 2. 멱등성 체크
             if (webhookRepository.existsByWebhookUuid(webhookUuid)) {
-                log.info("이미 처리된 웹훅이므로 스킵합니다: {}", webhookUuid);
                 return;
             }
 
-            // 3. Webhook 엔티티 생성 및 저장
+            // 3. Webhook 기록 저장
             webhook = new Webhook(webhookUuid, portOneId, eventStatus);
             webhookRepository.save(webhook);
 
-            // 4. 결제 확정 처리 분기 (핵심: SUB- 또는 BIH-로 시작하면 일반 결제 로직 스킵)
-            if (portOneId != null && (portOneId.startsWith("SUB-") || portOneId.startsWith("BIH-"))) {
-                log.info("구독 관련 결제(SUB/BIH) 웹훅입니다. 기록 후 종료합니다: {}", portOneId);
+            // 4. 이벤트 타입별 분기 처리 (핵심 해결책)
+            if (eventType.startsWith("BillingKey")) {
+                log.info("빌링키 관련 웹훅 수신 - 기록 후 종료: {}", eventType);
+            } else if (portOneId != null && (portOneId.startsWith("SUB-") || portOneId.startsWith("BIH-"))) {
+                log.info("구독 결제 웹훅 수신 - 기록 후 종료: {}", portOneId);
             } else if (portOneId != null && !portOneId.isBlank()) {
-                log.info("일반 결제 웹훅 확정 프로세스 진행: {}", portOneId);
-                paymentService.confirmPayment(portOneId, null);
+                // 일반 결제(PMN- 등)만 PaymentService로 전달
+                try {
+                    paymentService.confirmPayment(portOneId, null);
+                } catch (Exception e) {
+                    log.error("일반 결제 웹훅 확정 실패(무시): {}", e.getMessage());
+                }
             }
 
-            // 5. 성공 상태 변경
             webhook.processedWebhook();
             
         } catch (Exception e) {
-            log.error("웹훅 처리 중 에러 발생: {}", e.getMessage());
+            log.error("웹훅 처리 최종 에러: {}", e.getMessage());
             if (webhook != null) {
                 webhook.failedWebhook();
             }
-            // 웹훅은 롤백을 전파하지 않도록 처리
         }
     }
 
