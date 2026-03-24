@@ -76,7 +76,7 @@ class RefundControllerIntegrationTest {
         테스트유저 = userRepository.save(
                 new User("환불테스터", "refund@test.com",
                         passwordEncoder.encode("pass"), "010-1111-2222",
-                        0, 100000, MembershipGrade.NORMAL, "CUST_REFUND_001"));
+                        100000, 100000, MembershipGrade.NORMAL, "CUST_REFUND_001"));
         membershipRepository.save(Membership.init(테스트유저));
         액세스토큰 = jwtTokenProvider.createToken("refund@test.com", MembershipGrade.NORMAL);
 
