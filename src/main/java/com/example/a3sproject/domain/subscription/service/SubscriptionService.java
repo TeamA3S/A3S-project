@@ -162,7 +162,7 @@ public class SubscriptionService {
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 6. 성공 시 처리
-                if (response.getPayment() != null && "PAID".equals(response.getPayment().getStatus())) {
+                if (response.getPayment().getPaidAt() != null) {
                     // 6-1. 구독 청구 이력 저장
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
@@ -229,7 +229,7 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
-            if (response.getPayment() == null || !"PAID".equals(response.getPayment().getStatus())) {
+            if (response.getPayment().getPaidAt() == null) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
             // 성공 시 구독 청구에 저장
