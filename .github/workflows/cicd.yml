@@ -113,8 +113,8 @@ jobs:
           JWT_REFRESH_VALIDITY=$(aws ssm get-parameter --name "/a3s/JWT_REFRESH_VALIDITY" --with-decryption --query "Parameter.Value" --output text)
           PORTONE_API_SECRET=$(aws ssm get-parameter --name "/a3s/PORTONE_API_SECRET" --with-decryption --query "Parameter.Value" --output text)
           PORTONE_STORE_ID=$(aws ssm get-parameter --name "/a3s/PORTONE_STORE_ID" --with-decryption --query "Parameter.Value" --output text)
-          PORTONE_CHANNEL_KG=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_KG" --with-decryption --query "Parameter.Value" --output text)
           PORTONE_CHANNEL_TOSS=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_TOSS" --with-decryption --query "Parameter.Value" --output text)
+          PORTONE_CHANNEL_TOSS_BILLING=$(aws ssm get-parameter --name "/a3s/PORTONE_CHANNEL_TOSS_BILLING" --with-decryption --query "Parameter.Value" --output text)
 
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids $INSTANCE_ID \
