@@ -56,7 +56,7 @@ public class SubscriptionService {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
         // 중복 검증
-        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planUuid(), SubscriptionStatus.ACTIVE)) {
+        if (subscriptionRepository.existsByUserIdAndPlanIdAndStatus(userId, request.planId(), SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
 
