@@ -162,14 +162,14 @@ public class SubscriptionService {
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 6. 성공 시 처리
-                if ("PAID".equals(response.getStatus())) {
+                if (response.getPayment() != null && "PAID".equals(response.getPayment().getStatus())) {
                     // 6-1. 구독 청구 이력 저장
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
                             subscription.getAmount(),
                             SubscriptionBillingStatus.PAID,
                             paymentId,
-//                            response.getPaidAt(),
+//                            response.getPayment().getPaidAt(),
                             subscription.getCurrentPeriodEnd(),
                             subscription.getCurrentPeriodEnd().plusMonths(1),
                             null
@@ -189,7 +189,7 @@ public class SubscriptionService {
                         subscription,
                         subscription.getAmount(),
                         SubscriptionBillingStatus.FAILED,
-                        null,
+                        paymentId, // NULL 대신 paymentId 저장
 //                        OffsetDateTime.now(),
                         subscription.getCurrentPeriodEnd(),
                         subscription.getCurrentPeriodEnd().plusMonths(1),
@@ -229,7 +229,7 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
-            if (!"PAID".equals(response.getStatus())) {
+            if (response.getPayment() == null || !"PAID".equals(response.getPayment().getStatus())) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
             // 성공 시 구독 청구에 저장
@@ -259,7 +259,7 @@ public class SubscriptionService {
                     subscription,
                     amount,
                     SubscriptionBillingStatus.FAILED,
-                    null,
+                    paymentId, // NULL 대신 paymentId 저장
                     request.periodStart(),
                     request.periodEnd(),
                     e.getMessage()
