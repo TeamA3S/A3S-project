@@ -42,8 +42,15 @@ public class WebhookService {
             // 2. Webhook 엔티티 생성 및 저장
             webhook = new Webhook(webhookUuid, portOneId, eventStatus);
             webhookRepository.save(webhook);
-            // 3. 결제 확정 처리
-            paymentService.confirmPayment(portOneId, null);
+
+            // 3. 결제 확정 처리 (구독 결제는 PaymentService에서 처리하지 않음)
+            if (portOneId != null && (portOneId.startsWith("SUB-") || portOneId.startsWith("BIH-"))) {
+                log.info("구독 결제 웹훅 수신 - 별도 처리 필요 또는 스킵: {}", portOneId);
+                // 구독 관련 추가 로직이 필요하다면 여기에 작성
+            } else {
+                paymentService.confirmPayment(portOneId, null);
+            }
+
             // 4. 성공 상태 변경
             webhook.processedWebhook();
         }catch (Exception e) {
