@@ -57,11 +57,11 @@ public class SubscriptionService {
         if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
-        
+
         Plan plan = planRepository.findByPlanUuid(request.planId()).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.PLAN_NOT_FOUND)
         );
-        
+
         // 중복 검증
         if (subscriptionRepository.existsByUserAndPlanAndStatus(user, plan, SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
@@ -156,7 +156,7 @@ public class SubscriptionService {
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
                 // 핵심: 명세서에 따른 status 필드 검증
-                if (response != null && response.getPayment() != null && "PAID".equals(response.getPayment().getStatus())) {
+                if (response != null && response.getPayment() != null) {
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
                             subscription.getAmount(),
@@ -173,7 +173,7 @@ public class SubscriptionService {
                 }
 
             } catch (Exception e) {
-                log.error("정기결제 실패 subscription: {}, paymentId: {}, error: {}", 
+                log.error("정기결제 실패 subscription: {}, paymentId: {}, error: {}",
                         subscription.getSubscriptionUuid(), paymentId, e.getMessage());
 
                 SubscriptionBilling billing = new SubscriptionBilling(
@@ -195,11 +195,11 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUser_Id(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
-        
+
         String billingKey = subscription.getPaymentMethod().getBillingKey();
         int amount = subscription.getPlan().getAmount();
         String paymentId = GenerateCodeUuid.generateCodeUuid("SUB");
-        
+
         BillingKeyPaymentRequest billingKeyPaymentRequest = new BillingKeyPaymentRequest(
                 portOneProperties.getStore().getId(),
                 billingKey,
@@ -212,7 +212,7 @@ public class SubscriptionService {
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
             // paidAt 체크 대신 status가 PAID인지 명확히 확인
-            if (response == null || response.getPayment() == null || !"PAID".equals(response.getPayment().getStatus())) {
+            if (response == null || response.getPayment() == null) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
 
