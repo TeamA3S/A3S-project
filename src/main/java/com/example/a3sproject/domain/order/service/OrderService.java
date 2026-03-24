@@ -19,13 +19,8 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
-import com.example.a3sproject.global.exception.domain.PaymentException;
 import com.example.a3sproject.global.exception.domain.ProductException;
-
-import com.example.a3sproject.global.exception.domain.UserException;
-import com.example.a3sproject.global.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -408,8 +408,8 @@ api:
               description: "현재 이용 기간 종료일 (ISO 8601 형식, 예: 2026-03-01T23:59:59)"
 
     update-subscription:
-      url:
-      method:
+      url: /api/subscriptions/{subscriptionId}
+      method: PATCH
       description: 구독 상태 업데이트 (구독 해지)
       pathParams:
         - name: {subscriptionId}
