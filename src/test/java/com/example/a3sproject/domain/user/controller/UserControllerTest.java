@@ -67,7 +67,7 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("이미 존재하는 이메일로 가입을 시도하면 409 상태코드와 USER_ALREADY_EXISTS 예외 코드를 반환한다")
+    @DisplayName("이미 존재하는 이메일로 가입을 시도하면 409 상태코드와 EMAIL_ALREADY_EXISTS 예외 코드를 반환한다")
     void createUser_이메일중복_409에러응답() throws Exception {
         // given
         userRepository.save(new User("기존유저", "exist@test.com",
@@ -87,7 +87,7 @@ class UserControllerIntegrationTest {
 
         // then
         result.andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("USER_ALREADY_EXISTS"))
+                .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_EXISTS"))
                 .andExpect(jsonPath("$.message").exists());
     }
 

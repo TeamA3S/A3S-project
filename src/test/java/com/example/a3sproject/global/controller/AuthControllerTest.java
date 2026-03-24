@@ -79,7 +79,7 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("비밀번호가 일치하지 않으면 401 상태코드와 USER_UNAUTHORIZED 예외를 반환한다")
+    @DisplayName("비밀번호가 일치하지 않으면 401 상태코드와 USER_INFO_MISMATCH 예외를 반환한다")
     void login_비밀번호불일치_401에러응답() throws Exception {
         // given
         saveUserWithMembership("김로그인", "login@test.com", "password123", "010-9999-9999", "CUST_LOGIN");
@@ -92,7 +92,7 @@ class AuthControllerIntegrationTest {
 
         // then
         result.andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("USER_UNAUTHORIZED"))
+                .andExpect(jsonPath("$.code").value("USER_INFO_MISMATCH"))
                 .andExpect(jsonPath("$.message").exists());
     }
 
