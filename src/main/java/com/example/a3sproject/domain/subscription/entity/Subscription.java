@@ -15,13 +15,14 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Entity
-@Table(name = "subscriptions" /**,
- *   uniqueConstraints = {
- *           @UniqueConstraint(
- *                   name = "uk_payments_order_id",
- *                   columnNames = {"order_id"}
- *           )
-}*/)
+@Table(name = "subscriptions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_subscriptions_user_id",
+                        columnNames = {"user_id", "status"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Subscription extends BaseEntity {
     @Id

@@ -65,7 +65,7 @@ class WebhookServiceTest {
         given(webhookRepository.existsByWebhookUuidAndStatus("WH-DUP", WebhookStatus.PROCESSED)).willReturn(true);
 
         // when
-        webhookService.handleWebhook("WH-DUP", "PMN-001", "PAID");
+        webhookService.handleWebhook("{data:{WH-DUP, PMN-001, PAID}}");
 
         // then: 웹훅 저장과 결제 확정이 모두 호출되지 않는다
         verify(webhookRepository, never()).save(any(Webhook.class));

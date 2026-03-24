@@ -12,13 +12,14 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Entity
-@Table(name = "subscription_billings" /**,
-     *   uniqueConstraints = {
-     *           @UniqueConstraint(
-     *                   name = "uk_payments_order_id",
-     *                   columnNames = {"order_id"}
-     *           )
-        }*/)
+@Table(name = "subscription_billings",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_subscription_billings_subscription_id",
+                        columnNames = {"subscription_id", "periodStart"}
+                )
+        }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SubscriptionBilling extends BaseEntity {
     @Id
@@ -30,25 +31,26 @@ public class SubscriptionBilling extends BaseEntity {
     @JoinColumn(name = "subscription_id", nullable = false)
     private Subscription subscription;
 
-//    private String subscriptionUuid; // 구독 아이디
+    //    private String subscriptionUuid; // 구독 아이디
     private int amount; // 청구 금액
 
     @Enumerated(EnumType.STRING)
     private SubscriptionBillingStatus status; // 청구 상태
     private String paymentId; // 결제 아이디
-//    private OffsetDateTime attemptDate; //결제시도일 //createdAt
+    //    private OffsetDateTime attemptDate; //결제시도일 //createdAt
     private OffsetDateTime periodStart; //청구기간 시작일
     private OffsetDateTime periodEnd; //청구기간 종료일
     private String failureMessage; // 실패 메세지
 
-    private String billingUuid;
+    @Column(unique = true)
+    private String billingHistoryUuid;
 
     public SubscriptionBilling(Subscription subscription, int amount, String paymentId) {
         this.subscription = subscription;
         this.amount = amount;
         this.paymentId = paymentId;
         this.status = SubscriptionBillingStatus.PENDING;
-        this.billingUuid = GenerateCodeUuid.generateCodeUuid("BIL");
+        this.billingHistoryUuid = GenerateCodeUuid.generateCodeUuid("BIH");
     }
 
     public void AutoSubscriptionBillingSuccess() {
@@ -71,5 +73,6 @@ public class SubscriptionBilling extends BaseEntity {
         this.periodStart = periodStart;
         this.periodEnd = periodEnd;
         this.failureMessage = failureMessage;
+        this.billingHistoryUuid = GenerateCodeUuid.generateCodeUuid("BIH");
     }
 }
