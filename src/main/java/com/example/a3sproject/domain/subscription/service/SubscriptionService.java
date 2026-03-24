@@ -67,7 +67,7 @@ public class SubscriptionService {
                 OffsetDateTime.now(),
                 OffsetDateTime.now().plusMonths(1)
         );
-        createBilling(userId, response.subscriptionUuid(), firstBillingRequest);
+        createBilling(userId, response.subscriptionId(), firstBillingRequest);
 
         return response;
     }
