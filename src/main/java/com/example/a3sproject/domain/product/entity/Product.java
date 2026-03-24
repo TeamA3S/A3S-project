@@ -63,6 +63,9 @@ public class Product extends BaseEntity {
             throw new ProductException(ErrorCode.PRODUCT_OUT_OF_STOCK);
         }
         this.stock = this.stock - quantity;
+        if (this.stock == 0) {
+            updateStatus(ProductStatus.SOLD_OUT);
+        }
     }
     // 재고 증가 (환불/주문취소 시 재고 복구)
     public void increaseStock(int quantity) {

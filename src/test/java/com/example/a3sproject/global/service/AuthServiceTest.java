@@ -119,7 +119,7 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("비밀번호가 틀리면 USER_UNAUTHORIZED 예외가 발생한다")
+    @DisplayName("비밀번호가 틀리면 USER_INFO_MISMATCH 예외가 발생한다")
     void login_비밀번호불일치_USER_UNAUTHORIZED() {
         // given: 유저 조회 성공, 비밀번호 불일치
         LoginRequestDto request = mock(LoginRequestDto.class);
@@ -132,7 +132,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(UserException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.USER_UNAUTHORIZED);
+                .isEqualTo(ErrorCode.USER_INFO_MISMATCH);
     }
 
     @Test

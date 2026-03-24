@@ -147,7 +147,7 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("이미 가입된 이메일로 회원가입하면 USER_ALREADY_EXISTS 예외가 발생한다")
+    @DisplayName("이미 가입된 이메일로 회원가입하면 EMAIL_ALREADY_EXISTS 예외가 발생한다")
     void createUser_이메일중복_USER_ALREADY_EXISTS() {
         // given: 동일 이메일로 이미 가입된 유저 존재
         SignupUserRequest request = mock(SignupUserRequest.class);
@@ -158,7 +158,7 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.createUser(request))
                 .isInstanceOf(UserException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.USER_ALREADY_EXISTS);
+                .isEqualTo(ErrorCode.EMAIL_ALREADY_EXISTS);
     }
 
     @Test

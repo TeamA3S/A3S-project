@@ -32,8 +32,8 @@ portone:
   store:
     id: ${PORTONE_STORE_ID}
   channel:
-    kg-inicis: ${PORTONE_CHANNEL_KG}
     toss: ${PORTONE_CHANNEL_TOSS}
+    toss-billing: ${PORTONE_CHANNEL_TOSS_BILLING}
 
 logging:
   level:

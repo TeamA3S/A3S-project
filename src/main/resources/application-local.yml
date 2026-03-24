@@ -20,7 +20,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -37,8 +37,8 @@ portone:
   store:
     id: ${LOCAL_PORTONE_STORE_ID}
   channel:
-    kg-inicis: ${LOCAL_PORTONE_CHANNEL_KG:local-kg-channel-key}
     toss: ${LOCAL_PORTONE_CHANNEL_TOSS}
+    toss-billing: ${LOCAL_PORTONE_CHANNEL_TOSS_BILLING}
 
 logging:
   level:

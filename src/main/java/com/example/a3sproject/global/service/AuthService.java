@@ -36,7 +36,7 @@ public class AuthService {
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new UserException(ErrorCode.USER_UNAUTHORIZED);
+            throw new UserException(ErrorCode.USER_INFO_MISMATCH);
         }
 
         // 3. 멤버십 등급 조회

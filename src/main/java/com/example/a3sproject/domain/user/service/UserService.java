@@ -28,7 +28,7 @@ public class UserService {
 
         // 1. 이메일 중복 확인
         if (userRepository.existsByEmail(request.getUserEmail())) {
-            throw new UserException(ErrorCode.USER_ALREADY_EXISTS);
+            throw new UserException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         // 2. 비밀번호 암호화

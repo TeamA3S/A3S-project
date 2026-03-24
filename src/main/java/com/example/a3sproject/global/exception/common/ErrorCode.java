@@ -10,10 +10,11 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."),
-    USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 유저입니다."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 존재하는 이메일입니다."),
     USER_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
     USER_FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
     USER_NOT_MATCH(HttpStatus.BAD_REQUEST, "사용자가 일치하지 않습니다."),
+    USER_INFO_MISMATCH(HttpStatus.UNAUTHORIZED, "이메일 혹은 비밀번호가 올바르지 않습니다."),
 
     // Point
     POINT_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "포인트 잔액이 부족합니다."),

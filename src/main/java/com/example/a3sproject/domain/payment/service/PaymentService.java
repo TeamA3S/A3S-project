@@ -230,6 +230,7 @@ public class PaymentService {
         for (OrderItem orderItem : order.getOrderItems()) {
             orderItem.getProduct().decreaseStock(orderItem.getQuantity());
         }
+
         portOneConfirmed = true;
         // 7. 최종 확정
         payment.confirmPayment(portOnePaymentResponse.paidAt()); // 상태 변경

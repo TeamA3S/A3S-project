@@ -246,7 +246,7 @@ async function issuePortOneBillingKey(billingKeyData) {
 
         // 정기결제: 토스 채널 키 사용 (고정)
         const channelKeys = portoneConfig.channelKeys || {};
-        const channelKey = channelKeys.toss;
+        const channelKey = channelKeys['toss-billing'];
 
         if (!channelKey) {
             throw new Error('toss 채널키가 설정되지 않았습니다.');
