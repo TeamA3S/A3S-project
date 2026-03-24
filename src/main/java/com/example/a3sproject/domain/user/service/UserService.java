@@ -10,8 +10,6 @@ import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.UserException;
-import com.example.a3sproject.global.security.JwtTokenProvider;
-import com.example.a3sproject.global.security.refreshtoken.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

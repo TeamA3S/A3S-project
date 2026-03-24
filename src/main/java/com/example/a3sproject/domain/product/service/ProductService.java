@@ -1,6 +1,5 @@
 package com.example.a3sproject.domain.product.service;
 
-import com.example.a3sproject.domain.order.dto.GetOrderListResponseDto;
 import com.example.a3sproject.domain.product.dto.GetAllProductsResponseDto;
 import com.example.a3sproject.domain.product.dto.GetOneProductResponseDto;
 import com.example.a3sproject.domain.product.entity.Product;
@@ -9,9 +8,6 @@ import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.ProductException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

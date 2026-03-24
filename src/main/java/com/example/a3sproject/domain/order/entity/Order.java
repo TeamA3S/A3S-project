@@ -5,12 +5,10 @@ import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.global.entity.BaseEntity;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
-import com.example.a3sproject.global.security.CustomUserDetails;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.List;

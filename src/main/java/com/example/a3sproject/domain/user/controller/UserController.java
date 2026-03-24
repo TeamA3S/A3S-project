@@ -5,8 +5,6 @@ import com.example.a3sproject.domain.user.dto.SignupUserResponse;
 import com.example.a3sproject.domain.user.dto.UserProfileResponseDto;
 import com.example.a3sproject.domain.user.service.UserService;
 import com.example.a3sproject.global.dto.ApiResponseDto;
-import com.example.a3sproject.global.dto.LoginRequestDto;
-import com.example.a3sproject.global.dto.LoginResponseDto;
 import com.example.a3sproject.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

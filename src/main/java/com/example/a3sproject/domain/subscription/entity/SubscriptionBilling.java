@@ -2,7 +2,6 @@ package com.example.a3sproject.domain.subscription.entity;
 
 import com.example.a3sproject.domain.subscription.enums.SubscriptionBillingStatus;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
-import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -10,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Getter
 @Entity

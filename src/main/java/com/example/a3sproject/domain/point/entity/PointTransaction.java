@@ -2,8 +2,6 @@ package com.example.a3sproject.domain.point.entity;
 
 import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.global.entity.BaseEntity;
-import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.PointException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
