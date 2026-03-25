@@ -23,22 +23,22 @@ public class WebhookService {
     private final ObjectMapper objectMapper;
     private final SubscriptionWebhookService subscriptionWebhookService;
 
-    @Transactional
+//    @Transactional
     public void handleWebhook(String rawBody) {
         Webhook webhook = null;
         try {
             JsonNode root = objectMapper.readTree(rawBody);
             String eventType = root.path("type").asText(""); // 이벤트 타입 추출
-            
+
             JsonNode dataNode = root.path("data");
             String portOneId = dataNode.path("paymentId").asText(null);
             String webhookUuid = dataNode.path("transactionId").asText(null);
-            
+
             // 1. 빌링키 관련 이벤트는 transactionId가 없으므로 billingKey를 ID로 사용
             if (webhookUuid == null || webhookUuid.isBlank()) {
                 webhookUuid = dataNode.path("billingKey").asText("UNKNOWN-" + System.currentTimeMillis());
             }
-            
+
             String eventStatus = readEventStatus(root);
 
             // 2. 멱등성 체크
@@ -53,14 +53,14 @@ public class WebhookService {
             // 4. 이벤트 타입별 분기 처리 (핵심 해결책)
             if (eventType.startsWith("BillingKey")) {
                 log.info("빌링키 관련 웹훅 수신 - 기록 후 종료: {}", eventType);
-            } else if (portOneId != null && portOneId.startsWith("PMN-")) {
+            } else if ("Transaction.Paid".equals(eventType) && portOneId != null && portOneId.startsWith("PMN-")) {
                 // 일반 결제(PMN- 등)만 PaymentService로 전달
                 try {
                     paymentService.confirmPayment(portOneId, null);
                 } catch (Exception e) {
                     log.error("일반 결제 웹훅 확정 실패(무시): {}", e.getMessage());
                 }
-            } else if (portOneId != null && !portOneId.isBlank()) {
+            } else if ("Transaction.Paid".equals(eventType) && portOneId != null && portOneId.startsWith("SUB-")) {
                 log.info("구독 결제 웹훅 수신 - 기록 후 종료: {}", portOneId);
                 try {
                     // 🔥 구독 결제 성공 처리 로직 호출
@@ -68,10 +68,12 @@ public class WebhookService {
                 } catch (Exception e) {
                     log.error("구독 결제 처리 실패: {}", e.getMessage());
                 }
+            } else {
+                log.info("처리 대상이 아닌 웹훅 이벤트 - type: {}, paymentId: {}", eventType, portOneId);
             }
 
             webhook.processedWebhook();
-            
+
         } catch (Exception e) {
             log.error("웹훅 처리 최종 에러: {}", e.getMessage());
             if (webhook != null) {

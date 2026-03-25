@@ -238,10 +238,29 @@ public class SubscriptionService {
             log.info("🔥 paidAt: {}", (response != null && response.getPayment() != null)
                     ? response.getPayment().getPaidAt() : "null");
 
-            // paidAt이 null이 아니면 성공으로 판단
-            if (response == null || response.getPayment() == null
-                    || response.getPayment().getPaidAt() == null) {
+            if (response == null ) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
+            }
+            // 배포 환경에서는 즉시 paidAt이 오지 않고 Transaction.Paid 웹훅으로 후속 통지되는 케이스가 존재함
+            if (response.getPayment() == null || response.getPayment().getPaidAt() == null) {
+                SubscriptionBilling pendingBilling = new SubscriptionBilling(
+                        subscription,
+                        amount,
+                        SubscriptionBillingStatus.PENDING,
+                        paymentId,
+                        request.periodStart(),
+                        request.periodEnd(),
+                        null
+                );
+                SubscriptionBilling savedPendingBilling = subscriptionBillingRepository.save(pendingBilling);
+
+                return new CreateBillingResponse(
+                        true,
+                        savedPendingBilling.getBillingHistoryUuid(),
+                        paymentId,
+                        amount,
+                        SubscriptionBillingStatus.PENDING
+                );
             }
             // 성공 시 구독 청구에 저장
             SubscriptionBilling subscriptionBillingSuccess = new SubscriptionBilling(
