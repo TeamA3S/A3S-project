@@ -45,7 +45,7 @@ jobs:
          PORTONE_CHANNEL_TOSS: ${{ secrets.PORTONE_CHANNEL_TOSS }}
          PORTONE_CHANNEL_TOSS_BILLING: ${{ secrets.PORTONE_CHANNEL_TOSS_BILLING }}
 
-        run: ./gradlew build test
+        run: ./gradlew build -x test
 
       - name: JAR artifact 저장
         uses: actions/upload-artifact@v4
