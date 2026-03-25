@@ -62,7 +62,7 @@ public class WebhookService {
             if (eventType.startsWith("BillingKey")) {
                 log.info("=====빌링키 관련 웹훅 수신 - 기록 후 종료: {} =========", eventType);
             } else if ("Transaction.Paid".equals(eventType) && portOneId != null && portOneId.startsWith("PMN-")) {
-                
+
                 // 일반 결제(PMN- 등)만 PaymentService로 전달
                 try {
                     log.info("========= 일반 결제 웹훅 수신: {}, {} ========", eventType, portOneId);

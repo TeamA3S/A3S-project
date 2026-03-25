@@ -5,8 +5,6 @@ import com.example.a3sproject.domain.portone.webhook.entity.Webhook;
 import com.example.a3sproject.domain.portone.webhook.enums.WebhookStatus;
 import com.example.a3sproject.domain.portone.webhook.repository.WebhookRepository;
 import com.example.a3sproject.domain.subscription.service.SubscriptionWebhookService;
-import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.PaymentException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +31,7 @@ class WebhookServiceTest {
     @Mock private WebhookRepository webhookRepository;
     @Mock private PaymentService paymentService;
     @Mock private SubscriptionWebhookService subscriptionWebhookService;
-    @Spy  private ObjectMapper objectMapper;  // ← 실제 ObjectMapper 주입
+    @Spy  private ObjectMapper objectMapper;
 
     @InjectMocks
     private WebhookService webhookService;
@@ -54,20 +52,19 @@ class WebhookServiceTest {
     @Test
     @DisplayName("정상적인 웹훅 수신 시 결제 확정이 호출되고 웹훅 상태가 PROCESSED로 변경된다")
     void handleWebhook_정상수신_결제확정및PROCESSED상태() {
-        // given
-        given(webhookRepository.existsByWebhookUuid("TXN-001")).willReturn(false);
+        // given: 중복 없는 웹훅, save 정상 동작
+        given(webhookRepository.existsByWebhookUuidAndStatus("TXN-001", WebhookStatus.PROCESSED)).willReturn(false);
         given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
 
         // when
         webhookService.handleWebhook(makeRawBody("TXN-001", "PMN-001", "PAID"));
 
-        // then
+        // then: save 최소 1회 이상, 마지막 저장 엔티티 상태가 PROCESSED
         ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
-        verify(webhookRepository).save(captor.capture());
         verify(webhookRepository, atLeastOnce()).save(captor.capture());
         Webhook savedWebhook = captor.getAllValues().get(captor.getAllValues().size() - 1);
-        verify(paymentService).confirmPayment("PMN-001", null);
 
+        verify(paymentService).confirmPayment("PMN-001", null);
         assertThat(savedWebhook.getStatus()).isEqualTo(WebhookStatus.PROCESSED);
         assertThat(savedWebhook.getWebhookUuid()).isEqualTo("TXN-001");
         assertThat(savedWebhook.getPortOneId()).isEqualTo("PMN-001");
@@ -77,7 +74,7 @@ class WebhookServiceTest {
     @Test
     @DisplayName("BillingKey 이벤트는 결제 확정 로직을 호출하지 않는다")
     void handleWebhook_빌링키이벤트_결제확정미호출() {
-        // given
+        // given: BillingKey 이벤트 페이로드, save 정상 동작
         String rawBody = """
                 {
                   "type": "BillingKey.Issued",
@@ -87,7 +84,6 @@ class WebhookServiceTest {
                   }
                 }
                 """;
-        given(webhookRepository.existsByWebhookUuid("billing-key-001")).willReturn(false);
         given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
 
         // when
@@ -101,7 +97,7 @@ class WebhookServiceTest {
     @Test
     @DisplayName("구독 결제 Transaction.Paid 이벤트는 구독 웹훅 서비스로 전달된다")
     void handleWebhook_구독결제이벤트_구독웹훅호출() {
-        // given
+        // given: 구독 paymentId(SUB- 접두사), save 정상 동작
         String rawBody = """
                 {
                   "type": "Transaction.Paid",
@@ -112,7 +108,6 @@ class WebhookServiceTest {
                   }
                 }
                 """;
-        given(webhookRepository.existsByWebhookUuid("TXN-SUB-001")).willReturn(false);
         given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
 
         // when
@@ -126,7 +121,7 @@ class WebhookServiceTest {
     @Test
     @DisplayName("이미 처리된 웹훅 UUID가 재수신되면 중복 처리 없이 즉시 종료된다")
     void handleWebhook_중복웹훅수신_즉시종료() {
-        // given
+        // given: 이미 PROCESSED 상태로 저장된 웹훅 UUID
         given(webhookRepository.existsByWebhookUuidAndStatus("TXN-DUP", WebhookStatus.PROCESSED)).willReturn(true);
 
         // when
@@ -137,29 +132,10 @@ class WebhookServiceTest {
         verify(paymentService, never()).confirmPayment(anyString(), any());
     }
 
-//    @Test
-//    @DisplayName("결제 확정 중 예외가 발생하면 웹훅 상태가 FAILED로 변경된다")
-//    void handleWebhook_결제확정중예외발생_FAILED상태() {
-//        // given
-//        given(webhookRepository.existsByWebhookUuid("TXN-FAIL")).willReturn(false);
-//        given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
-//        willThrow(new PaymentException(ErrorCode.PAYMENT_NOT_FOUND))
-//                .given(paymentService).confirmPayment("PMN-FAIL", null);
-//
-//        // when
-//        webhookService.handleWebhook(makeRawBody("TXN-FAIL", "PMN-FAIL", "PAID"));
-//
-//        // then
-//        ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
-//        verify(webhookRepository).save(captor.capture());
-//        assertThat(captor.getValue().getStatus()).isEqualTo(WebhookStatus.FAILED);
-//    }
-
     @Test
     @DisplayName("결제 확정 중 예외가 발생해도 웹훅 핸들러는 예외를 외부로 전파하지 않는다")
     void handleWebhook_내부예외발생_예외비전파() {
-        // given
-        given(webhookRepository.existsByWebhookUuid("TXN-ERR")).willReturn(false);
+        // given: save 정상, confirmPayment에서 런타임 예외 발생
         given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
         willThrow(new RuntimeException("PortOne 서버 오류"))
                 .given(paymentService).confirmPayment("PMN-ERR", null);
@@ -172,8 +148,7 @@ class WebhookServiceTest {
     @Test
     @DisplayName("웹훅 저장 자체가 실패하면 결제 확정은 호출되지 않는다")
     void handleWebhook_웹훅저장실패_결제확정미호출() {
-        // given
-        given(webhookRepository.existsByWebhookUuid("TXN-SAVE-FAIL")).willReturn(false);
+        // given: 첫 save 호출 시 DB 예외 발생
         given(webhookRepository.save(any(Webhook.class))).willThrow(new RuntimeException("DB 저장 실패"));
 
         // when
@@ -186,8 +161,7 @@ class WebhookServiceTest {
     @Test
     @DisplayName("웹훅 수신 시 portOneId와 eventStatus가 정확히 웹훅 엔티티에 저장된다")
     void handleWebhook_정상수신_웹훅엔티티필드정확히저장() {
-        // given
-        given(webhookRepository.existsByWebhookUuid("TXN-FIELD")).willReturn(false);
+        // given: VIRTUAL_ACCOUNT_ISSUED 상태 페이로드, save 정상 동작
         given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
 
         // when

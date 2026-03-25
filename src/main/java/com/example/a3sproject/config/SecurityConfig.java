@@ -49,9 +49,6 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // H2 Console 허용
-            .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-
             // 요청 권한 설정
             .authorizeHttpRequests(authorize -> authorize
                      // 1) 정적 리소스
@@ -74,8 +71,6 @@ public class SecurityConfig {
                     // 헬스체크 허용
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/h2-console/**").permitAll()
-                    // H2 Console 허용
-                    .requestMatchers(toH2Console()).permitAll()
 
                     // 5) 그 외 API는 인증 필요
                     .requestMatchers("/api/**").authenticated()
