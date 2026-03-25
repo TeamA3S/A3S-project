@@ -1,19 +1,14 @@
 package com.example.a3sproject.domain.point.service;
 
-import com.example.a3sproject.domain.point.entity.PointTransaction;
+
 import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.domain.point.repository.PointRepository;
-import com.example.a3sproject.domain.user.entity.User;
-import com.example.a3sproject.domain.user.repository.UserRepository;
-import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.UserException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
