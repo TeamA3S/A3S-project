@@ -13,5 +13,5 @@ public interface SubscriptionBillingRepository extends JpaRepository<Subscriptio
 
     List<SubscriptionBilling> findBySubscription(Subscription subscription);
 
-    Optional<Object> findByPaymentId(String paymentId);
+    Optional<SubscriptionBilling> findByPaymentId(String paymentId);
 }

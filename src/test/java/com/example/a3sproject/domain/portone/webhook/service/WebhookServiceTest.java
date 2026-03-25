@@ -4,6 +4,7 @@ import com.example.a3sproject.domain.payment.service.PaymentService;
 import com.example.a3sproject.domain.portone.webhook.entity.Webhook;
 import com.example.a3sproject.domain.portone.webhook.enums.WebhookStatus;
 import com.example.a3sproject.domain.portone.webhook.repository.WebhookRepository;
+import com.example.a3sproject.domain.subscription.service.SubscriptionWebhookService;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,7 @@ class WebhookServiceTest {
 
     @Mock private WebhookRepository webhookRepository;
     @Mock private PaymentService paymentService;
+    @Mock private SubscriptionWebhookService subscriptionWebhookService;
     @Spy  private ObjectMapper objectMapper;  // ← 실제 ObjectMapper 주입
 
     @InjectMocks
@@ -67,6 +69,55 @@ class WebhookServiceTest {
         assertThat(captor.getValue().getWebhookUuid()).isEqualTo("TXN-001");
         assertThat(captor.getValue().getPortOneId()).isEqualTo("PMN-001");
         assertThat(captor.getValue().getEventStatus()).isEqualTo("PAID");
+    }
+
+    @Test
+    @DisplayName("BillingKey 이벤트는 결제 확정 로직을 호출하지 않는다")
+    void handleWebhook_빌링키이벤트_결제확정미호출() {
+        // given
+        String rawBody = """
+                {
+                  "type": "BillingKey.Issued",
+                  "data": {
+                    "billingKey": "billing-key-001",
+                    "paymentId": ""
+                  }
+                }
+                """;
+        given(webhookRepository.existsByWebhookUuid("billing-key-001")).willReturn(false);
+        given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
+
+        // when
+        webhookService.handleWebhook(rawBody);
+
+        // then
+        verify(paymentService, never()).confirmPayment(anyString(), any());
+        verify(subscriptionWebhookService, never()).handleSubscriptionPayment(anyString());
+    }
+
+    @Test
+    @DisplayName("구독 결제 Transaction.Paid 이벤트는 구독 웹훅 서비스로 전달된다")
+    void handleWebhook_구독결제이벤트_구독웹훅호출() {
+        // given
+        String rawBody = """
+                {
+                  "type": "Transaction.Paid",
+                  "data": {
+                    "transactionId": "TXN-SUB-001",
+                    "paymentId": "SUB-001",
+                    "status": "PAID"
+                  }
+                }
+                """;
+        given(webhookRepository.existsByWebhookUuid("TXN-SUB-001")).willReturn(false);
+        given(webhookRepository.save(any(Webhook.class))).willAnswer(i -> i.getArgument(0));
+
+        // when
+        webhookService.handleWebhook(rawBody);
+
+        // then
+        verify(subscriptionWebhookService).handleSubscriptionPayment("SUB-001");
+        verify(paymentService, never()).confirmPayment(anyString(), any());
     }
 
     @Test
