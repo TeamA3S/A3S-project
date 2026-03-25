@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.portone.webhook.service;
 
 import com.example.a3sproject.domain.payment.service.PaymentService;
 import com.example.a3sproject.domain.portone.webhook.entity.Webhook;
+import com.example.a3sproject.domain.portone.webhook.enums.WebhookStatus;
 import com.example.a3sproject.domain.portone.webhook.repository.WebhookRepository;
 import com.example.a3sproject.domain.subscription.service.SubscriptionWebhookService;
 import lombok.RequiredArgsConstructor;
@@ -46,17 +47,18 @@ public class WebhookService {
             log.info("===== eventStatus {} =====", eventStatus);
 
             // 2. 멱등성 체크
-            if (webhookRepository.existsByWebhookUuid(webhookUuid)) {
+            if (webhookRepository.existsByWebhookUuidAndStatus(webhookUuid, WebhookStatus.PROCESSED)) {
                 log.info("===== webhookUuid 확인 {} =====", webhookUuid);
                 return;
             }
 
-            // 3. Webhook 기록 저장
-            webhook = new Webhook(webhookUuid, portOneId, eventStatus);
-            log.info("===== webhook 기록 저장 ===== {}", webhook);
-            webhookRepository.save(webhook);
+            // 3. Webhook 기록 조회 / 생성
+            String finalWebhookUuid = webhookUuid;
+            webhook = webhookRepository.findByWebhookUuid(webhookUuid)
+                    .orElseGet(() -> webhookRepository.save(new Webhook(finalWebhookUuid, portOneId, eventStatus)));
 
             // 4. 이벤트 타입별 분기 처리 (핵심 해결책)
+            boolean processed = true;
             if (eventType.startsWith("BillingKey")) {
                 log.info("=====빌링키 관련 웹훅 수신 - 기록 후 종료: {} =========", eventType);
             } else if ("Transaction.Paid".equals(eventType) && portOneId != null && portOneId.startsWith("PMN-")) {
@@ -67,6 +69,7 @@ public class WebhookService {
                     paymentService.confirmPayment(portOneId, null);
                 } catch (Exception e) {
                     log.error("========= 일반 결제 웹훅 확정 실패(무시): {} ============", e.getMessage());
+                    processed = false;
                 }
             } else if ("Transaction.Paid".equals(eventType) && portOneId != null && portOneId.startsWith("SUB-")) {
                 log.info("======= 구독 결제 웹훅 수신 - 기록 후 종료: {} ===========", portOneId);
@@ -76,19 +79,20 @@ public class WebhookService {
                     subscriptionWebhookService.handleSubscriptionPayment(portOneId);
                 } catch (Exception e) {
                     log.error("====== 구독 결제 처리 실패: {} =========", e.getMessage());
+                    processed = false;
                 }
             } else {
                 log.info("====== 처리 대상이 아닌 웹훅 이벤트 - type: {}, paymentId: {} =======", eventType, portOneId);
             }
-
-            log.info("===== 이벤트 타입 분기처리 종료: {} =======", eventType);
-            webhook.processedWebhook();
-
-        } catch (Exception e) {
-            log.error("========= 웹훅 처리 최종 에러: {} =========", e.getMessage());
-            if (webhook != null) {
+            if (processed) {
+                webhook.processedWebhook();
+            } else {
                 webhook.failedWebhook();
             }
+            webhookRepository.save(webhook);
+
+        } catch (Exception e) {
+            log.error("웹훅 처리 최종 에러: {}", e.getMessage());
         }
     }
 

@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -63,12 +64,14 @@ class WebhookServiceTest {
         // then
         ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
         verify(webhookRepository).save(captor.capture());
+        verify(webhookRepository, atLeastOnce()).save(captor.capture());
+        Webhook savedWebhook = captor.getAllValues().get(captor.getAllValues().size() - 1);
         verify(paymentService).confirmPayment("PMN-001", null);
 
-        assertThat(captor.getValue().getStatus()).isEqualTo(WebhookStatus.PROCESSED);
-        assertThat(captor.getValue().getWebhookUuid()).isEqualTo("TXN-001");
-        assertThat(captor.getValue().getPortOneId()).isEqualTo("PMN-001");
-        assertThat(captor.getValue().getEventStatus()).isEqualTo("PAID");
+        assertThat(savedWebhook.getStatus()).isEqualTo(WebhookStatus.PROCESSED);
+        assertThat(savedWebhook.getWebhookUuid()).isEqualTo("TXN-001");
+        assertThat(savedWebhook.getPortOneId()).isEqualTo("PMN-001");
+        assertThat(savedWebhook.getEventStatus()).isEqualTo("PAID");
     }
 
     @Test
@@ -124,7 +127,7 @@ class WebhookServiceTest {
     @DisplayName("이미 처리된 웹훅 UUID가 재수신되면 중복 처리 없이 즉시 종료된다")
     void handleWebhook_중복웹훅수신_즉시종료() {
         // given
-        given(webhookRepository.existsByWebhookUuid("TXN-DUP")).willReturn(true);
+        given(webhookRepository.existsByWebhookUuidAndStatus("TXN-DUP", WebhookStatus.PROCESSED)).willReturn(true);
 
         // when
         webhookService.handleWebhook(makeRawBody("TXN-DUP", "PMN-DUP", "PAID"));
@@ -192,10 +195,11 @@ class WebhookServiceTest {
 
         // then
         ArgumentCaptor<Webhook> captor = ArgumentCaptor.forClass(Webhook.class);
-        verify(webhookRepository).save(captor.capture());
-        assertThat(captor.getValue().getWebhookUuid()).isEqualTo("TXN-FIELD");
-        assertThat(captor.getValue().getPortOneId()).isEqualTo("PMN-FIELD-001");
-        assertThat(captor.getValue().getEventStatus()).isEqualTo("VIRTUAL_ACCOUNT_ISSUED");
-        assertThat(captor.getValue().getStatus()).isEqualTo(WebhookStatus.PROCESSED);
+        verify(webhookRepository, atLeastOnce()).save(captor.capture());
+        Webhook savedWebhook = captor.getAllValues().get(captor.getAllValues().size() - 1);
+        assertThat(savedWebhook.getWebhookUuid()).isEqualTo("TXN-FIELD");
+        assertThat(savedWebhook.getPortOneId()).isEqualTo("PMN-FIELD-001");
+        assertThat(savedWebhook.getEventStatus()).isEqualTo("VIRTUAL_ACCOUNT_ISSUED");
+        assertThat(savedWebhook.getStatus()).isEqualTo(WebhookStatus.PROCESSED);
     }
 }

@@ -208,10 +208,12 @@ public class SubscriptionService {
     @Transactional
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
+        log.info("🔥 createBilling 진입 - subscriptionId: {}", subscriptionId); 
         // 본인 구독인지 확인
         Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUser_Id(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
+        log.info("🔥 subscription 조회 완료 - billingKey: {}", subscription.getPaymentMethod().getBillingKey());
         // 빌링키 가져오기
         String billingKey = subscription.getPaymentMethod().getBillingKey();
 
