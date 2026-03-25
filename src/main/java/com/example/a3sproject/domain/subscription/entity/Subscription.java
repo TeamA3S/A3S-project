@@ -18,8 +18,8 @@ import java.time.OffsetDateTime;
 @Table(name = "subscriptions",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_subscriptions_user_id",
-                        columnNames = {"user_id", "status"}
+                        name = "uk_subscriptions_plan_id_user_id",
+                        columnNames = {"user_id", "plan_id", "status"}
                 )
         }
 )
