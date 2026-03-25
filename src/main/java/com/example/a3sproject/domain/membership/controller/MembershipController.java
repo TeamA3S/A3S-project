@@ -24,7 +24,7 @@ public class MembershipController {
     public ResponseEntity<ApiResponseDto<MyMembershipResponseDto>> getMyMembership(
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
-        MyMembershipResponseDto response = membershipService.getMyMembership(userDetails.getEmail());
+        MyMembershipResponseDto response = membershipService.getMyMembership(userDetails.getUser());
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(ApiResponseDto.success(HttpStatus.OK, response));

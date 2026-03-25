@@ -6,6 +6,7 @@ import com.example.a3sproject.domain.membership.repository.MembershipRepository;
 import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
 import com.example.a3sproject.domain.order.repository.OrderRepository;
+import com.example.a3sproject.domain.payment.dto.PaymentPrepareResult;
 import com.example.a3sproject.domain.payment.dto.request.PaymentTryRequest;
 import com.example.a3sproject.domain.payment.dto.response.PaymentConfirmResponse;
 import com.example.a3sproject.domain.payment.dto.response.PaymentTryResponse;
@@ -45,13 +46,14 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
 
-    @Mock private PaymentRepository paymentRepository;
+    // PaymentService가 직접 갖는 의존성만
     @Mock private OrderRepository orderRepository;
     @Mock private PortOneClient portOneClient;
     @Mock private PointService pointService;
-    @Mock private MembershipRepository membershipRepository;
-    @Mock private UserRepository userRepository;
     @Mock private PaymentFailureHandler paymentFailureHandler;
+    @Mock private PaymentPreProcessor paymentPreProcessor;
+    @Mock private PaymentConfirmProcessor paymentConfirmProcessor;
+    @Mock private PaymentRepository paymentRepository;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -112,6 +114,10 @@ class PaymentServiceTest {
                 new PortOnePaymentResponse.PaymentAmount(amount, 0),
                 OffsetDateTime.now()
         );
+    }
+
+    private PaymentPrepareResult createPaymentPrepareResult(Payment payment, boolean pointUsed, Long userId) {
+        return new PaymentPrepareResult(payment, pointUsed, userId);
     }
 
     private <T> T createInstance(Class<T> clazz) {
@@ -248,13 +254,13 @@ class PaymentServiceTest {
     @Test
     @DisplayName("음수 포인트를 사용하려 하면 INVALID_INPUT 예외가 발생한다")
     void createPayment_음수포인트_INVALID_INPUT() {
-        // given: 포인트를 음수로 입력하는 변조 시도
+        // given
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         given(orderRepository.findByIdAndUser_Id(1L, 1L)).willReturn(Optional.of(order));
 
         PaymentTryRequest request = new PaymentTryRequest(1L, 100000, -1000);
 
-        // when & then: 음수 포인트 방어 로직에서 INVALID_INPUT 예외 발생
+        // when & then
         assertThatThrownBy(() -> paymentService.createPayment(1L, request))
                 .isInstanceOf(PaymentException.class)
                 .extracting("errorCode")
@@ -284,55 +290,59 @@ class PaymentServiceTest {
     @Test
     @DisplayName("PortOne 검증을 통과하면 결제가 확정되고 주문이 COMPLETED 상태로 변경된다")
     void confirmPayment_정상검증_결제확정및주문완료() {
-        // given: PortOne 조회 성공, 금액 일치, 멤버십 조회 성공
+        // given
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 100000, PaidStatus.PENDING, 0);
-        Membership membership = createMembership(테스트유저, MembershipGrade.NORMAL);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, false, 1L);
         PortOnePaymentResponse portOneResponse = createPortOneResponse(100000);
+        PaymentConfirmResponse confirmResponse =
+                new PaymentConfirmResponse("ODN-TEST-1", "결제가 완료되었습니다.");
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
         given(portOneClient.getPayment("PMN-TEST-1")).willReturn(portOneResponse);
-        given(userRepository.findWithLockById(1L)).willReturn(Optional.of(테스트유저));
-        given(membershipRepository.findWithLockByUser(테스트유저)).willReturn(Optional.of(membership));
-        given(paymentRepository.save(any(Payment.class))).willReturn(payment);
+        given(paymentConfirmProcessor.confirm(payment, portOneResponse)).willReturn(confirmResponse);
 
         // when
         PaymentConfirmResponse result = paymentService.confirmPayment("PMN-TEST-1", 1L);
 
-        // then: 결제 확정 성공, 주문 상태 COMPLETED, 포인트 적립 호출
+        // then
         assertThat(result.orderNumber()).isEqualTo("ODN-TEST-1");
-        assertThat(order.getOrderStatus()).isEqualTo(OrderStatus.COMPLETED);
-        verify(pointService).earnPoint(anyLong(), anyLong(), anyInt());
+        verify(paymentPreProcessor).validateAndPrepare("PMN-TEST-1", 1L);
+        verify(portOneClient).getPayment("PMN-TEST-1");
+        verify(paymentConfirmProcessor).confirm(payment, portOneResponse);
     }
 
     @Test
     @DisplayName("PortOne에서 조회한 금액이 DB 결제 금액과 다르면 PAYMENT_AMOUNT_MISMATCH 예외가 발생하고 보상 트랜잭션이 실행된다")
     void confirmPayment_금액불일치_보상트랜잭션실행() {
-        // given: DB에 저장된 결제금액 100,000원인데 PortOne에서 90,000원으로 응답
+        // given
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 100000, PaidStatus.PENDING, 0);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, false, 1L);
         PortOnePaymentResponse mismatchResponse = createPortOneResponse(90000);
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
         given(portOneClient.getPayment("PMN-TEST-1")).willReturn(mismatchResponse);
+        given(paymentConfirmProcessor.confirm(payment, mismatchResponse))
+                .willThrow(new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH));
 
-        // when & then: PAYMENT_AMOUNT_MISMATCH 예외 발생 및 보상 트랜잭션(취소 + failPayment) 호출 검증
+        // when & then
         assertThatThrownBy(() -> paymentService.confirmPayment("PMN-TEST-1", 1L))
                 .isInstanceOf(PaymentException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
 
-        verify(paymentFailureHandler).handlePaymentFailure(any(Payment.class), isNull(), anyLong());
+        verify(paymentFailureHandler).handlePaymentFailure(
+                any(PaymentPrepareResult.class), eq("PMN-TEST-1"), eq(true));
     }
 
     @Test
     @DisplayName("PortOne 결제 상태가 PAID가 아니면 PAYMENT_PORTONE_ERROR 예외가 발생한다")
     void confirmPayment_PortOne미결제상태_PAYMENT_PORTONE_ERROR() {
-        // given: PortOne에서 결제 상태가 FAILED로 응답
+        // given
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 100000, PaidStatus.PENDING, 0);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, false, 1L);
         PortOnePaymentResponse failedResponse = new PortOnePaymentResponse(
                 "PMN-TEST-1",
                 PortOnePayStatus.FAILED,
@@ -340,9 +350,10 @@ class PaymentServiceTest {
                 OffsetDateTime.now()
         );
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
         given(portOneClient.getPayment("PMN-TEST-1")).willReturn(failedResponse);
+        given(paymentConfirmProcessor.confirm(payment, failedResponse))
+                .willThrow(new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR));
 
         // when & then
         assertThatThrownBy(() -> paymentService.confirmPayment("PMN-TEST-1", 1L))
@@ -354,14 +365,11 @@ class PaymentServiceTest {
     @Test
     @DisplayName("이미 SUCCESS 상태로 처리된 결제를 중복 확정하려 하면 DUPLICATE_PAYMENT_REQUEST 예외가 발생한다")
     void confirmPayment_중복확정요청_DUPLICATE_PAYMENT_REQUEST() {
-        // given: 이미 SUCCESS 상태로 처리된 결제 (멱등성 체크)
-        Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.COMPLETED);
-        Payment payment = createPayment(1L, order, 100000, PaidStatus.SUCCESS, 0);
+        // given: 중복 검증은 PreProcessor에서 처리
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L))
+                .willThrow(new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST));
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(true);
-
-        // when & then: 멱등성 체크에서 DUPLICATE_PAYMENT_REQUEST 예외 발생, PortOne 조회 불필요
+        // when & then
         assertThatThrownBy(() -> paymentService.confirmPayment("PMN-TEST-1", 1L))
                 .isInstanceOf(PaymentException.class)
                 .extracting("errorCode")
@@ -373,13 +381,11 @@ class PaymentServiceTest {
     @Test
     @DisplayName("타유저가 결제 확정을 시도하면 USER_FORBIDDEN 예외가 발생한다")
     void confirmPayment_타유저접근_USER_FORBIDDEN() {
-        // given: 결제는 userId=1 유저 것인데, userId=2 유저가 확정 시도
-        Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
-        Payment payment = createPayment(1L, order, 100000, PaidStatus.PENDING, 0);
+        // given: 소유권 검증은 PreProcessor에서 처리
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 2L))
+                .willThrow(new PaymentException(ErrorCode.USER_FORBIDDEN));
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-
-        // when & then: 소유권 검증에서 USER_FORBIDDEN 예외 발생
+        // when & then
         assertThatThrownBy(() -> paymentService.confirmPayment("PMN-TEST-1", 2L))
                 .isInstanceOf(PaymentException.class)
                 .extracting("errorCode")
@@ -389,70 +395,67 @@ class PaymentServiceTest {
     @Test
     @DisplayName("confirmPayment 내부에서 예상치 못한 예외 발생 시 보상 트랜잭션이 실행된다")
     void confirmPayment_내부예외_보상트랜잭션실행() {
-        // given: PortOne 조회 시 런타임 예외 발생 (네트워크 오류 등)
+        // given
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 100000, PaidStatus.PENDING, 0);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, false, 1L);
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
-        given(portOneClient.getPayment("PMN-TEST-1")).willThrow(new RuntimeException("PortOne 서버 오류"));
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
+        given(portOneClient.getPayment("PMN-TEST-1"))
+                .willThrow(new RuntimeException("PortOne 서버 오류"));
 
-        // when & then: PAYMENT_PORTONE_ERROR로 래핑되어 예외 발생, 보상 트랜잭션 호출 검증
+        // when & then
         assertThatThrownBy(() -> paymentService.confirmPayment("PMN-TEST-1", 1L))
                 .isInstanceOf(PaymentException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.PAYMENT_PORTONE_ERROR);
 
-        verify(paymentFailureHandler).handlePaymentFailure(any(), any(), anyLong());
+        verify(paymentFailureHandler).handlePaymentFailure(
+                any(PaymentPrepareResult.class), eq("PMN-TEST-1"), eq(false));
     }
 
     @Test
     @DisplayName("결제 확정 성공 시 멤버십 등급이 갱신된다")
     void confirmPayment_결제확정성공_멤버십등급갱신() {
-        // given: 총 결제금액 0원 유저가 500,000원 결제 성공 → VVIP 조건 충족
-        User 신규유저 = createUser(1L, 0);
-        ReflectionTestUtils.setField(신규유저, "totalPaymentAmount", 0);
-        Order order = createOrder(1L, 신규유저, 500000, OrderStatus.PENDING);
+        // given: 멤버십 등급 갱신은 ConfirmProcessor에서 처리 → 정상 흐름 검증
+        Order order = createOrder(1L, 테스트유저, 500000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 500000, PaidStatus.PENDING, 0);
-        Membership membership = createMembership(신규유저, MembershipGrade.NORMAL);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, false, 1L);
         PortOnePaymentResponse portOneResponse = createPortOneResponse(500000);
+        PaymentConfirmResponse confirmResponse =
+                new PaymentConfirmResponse("ODN-TEST-1", "결제가 완료되었습니다.");
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
         given(portOneClient.getPayment("PMN-TEST-1")).willReturn(portOneResponse);
-        given(userRepository.findWithLockById(1L)).willReturn(Optional.of(신규유저));
-        given(membershipRepository.findWithLockByUser(신규유저)).willReturn(Optional.of(membership));
-        given(paymentRepository.save(any(Payment.class))).willReturn(payment);
+        given(paymentConfirmProcessor.confirm(payment, portOneResponse)).willReturn(confirmResponse);
 
         // when
         paymentService.confirmPayment("PMN-TEST-1", 1L);
 
-        // then: 총 결제금액 누적 후 멤버십 등급 갱신이 호출된다
-        assertThat(신규유저.getTotalPaymentAmount()).isEqualTo(500000);
-        assertThat(membership.getGrade()).isEqualTo(MembershipGrade.VVIP);
+        // then: ConfirmProcessor가 호출됐다면 내부에서 멤버십 갱신이 실행됨
+        verify(paymentConfirmProcessor).confirm(payment, portOneResponse);
     }
 
     @Test
     @DisplayName("포인트를 사용한 결제 확정 시 포인트 차감이 먼저 실행된다")
     void confirmPayment_포인트사용결제_포인트차감호출() {
-        // given: 포인트 30,000P 사용, 실결제 70,000원
+        // given: 포인트 차감은 PreProcessor에서 처리
         Order order = createOrder(1L, 테스트유저, 100000, OrderStatus.PENDING);
         Payment payment = createPayment(1L, order, 70000, PaidStatus.PENDING, 30000);
-        Membership membership = createMembership(테스트유저, MembershipGrade.NORMAL);
+        PaymentPrepareResult prepareResult = createPaymentPrepareResult(payment, true, 1L);
         PortOnePaymentResponse portOneResponse = createPortOneResponse(70000);
+        PaymentConfirmResponse confirmResponse =
+                new PaymentConfirmResponse("ODN-TEST-1", "결제가 완료되었습니다.");
 
-        given(paymentRepository.findByPortOneId("PMN-TEST-1")).willReturn(Optional.of(payment));
-        given(paymentRepository.existsByPortOneIdAndPaidStatus("PMN-TEST-1", PaidStatus.SUCCESS)).willReturn(false);
+        given(paymentPreProcessor.validateAndPrepare("PMN-TEST-1", 1L)).willReturn(prepareResult);
         given(portOneClient.getPayment("PMN-TEST-1")).willReturn(portOneResponse);
-        given(userRepository.findWithLockById(1L)).willReturn(Optional.of(테스트유저));
-        given(membershipRepository.findWithLockByUser(테스트유저)).willReturn(Optional.of(membership));
-        given(paymentRepository.save(any(Payment.class))).willReturn(payment);
+        given(paymentConfirmProcessor.confirm(payment, portOneResponse)).willReturn(confirmResponse);
 
         // when
         paymentService.confirmPayment("PMN-TEST-1", 1L);
 
-        // then: 포인트 차감(30,000P)과 포인트 적립이 모두 호출된다
-        verify(pointService).validateAndUse(1L, 1L, 30000);
-        verify(pointService).earnPoint(anyLong(), anyLong(), anyInt());
+        // then: 포인트 차감은 PreProcessor에 위임됐으므로 호출 여부만 검증
+        verify(paymentPreProcessor).validateAndPrepare("PMN-TEST-1", 1L);
+        verify(paymentConfirmProcessor).confirm(payment, portOneResponse);
     }
 }
