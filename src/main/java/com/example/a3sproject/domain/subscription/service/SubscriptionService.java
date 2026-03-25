@@ -51,9 +51,11 @@ public class SubscriptionService {
 
     @Transactional
     public CreateSubscriptionResponse createSubscription(User user, CreateSubscriptionRequest request) {
+        log.info("====================== billingdey 요청 ====================" + request);
         // 1. PortOne API로 billingKey 유효성 검증
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
 
+        log.info("====================== validateBillingKeyResponse {} ================", validateBillingKeyResponse);
         // 검증 추가
         if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
@@ -208,7 +210,7 @@ public class SubscriptionService {
     @Transactional
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
-        log.info("🔥 createBilling 진입 - subscriptionId: {}", subscriptionId); 
+        log.info("🔥 createBilling 진입 - subscriptionId: {}", subscriptionId);
         // 본인 구독인지 확인
         Subscription subscription = subscriptionRepository.findBySubscriptionUuidAndUser_Id(subscriptionId, userId).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.SUBSCRIPTION_NOT_FOUND)
