@@ -10,10 +10,13 @@ import com.example.a3sproject.domain.payment.repository.PaymentRepository;
 import com.example.a3sproject.domain.point.service.PointService;
 import com.example.a3sproject.domain.portone.dto.response.PortOnePaymentResponse;
 import com.example.a3sproject.domain.portone.enums.PortOnePayStatus;
+import com.example.a3sproject.domain.product.entity.Product;
+import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
+import com.example.a3sproject.global.exception.domain.ProductException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +31,7 @@ public class PaymentConfirmProcessor {
     private final PointService pointService;
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
+    private final ProductRepository productRepository;
 
     @Transactional
     public PaymentConfirmResponse confirm(Payment payment, PortOnePaymentResponse portOneResponse) {
@@ -41,9 +45,11 @@ public class PaymentConfirmProcessor {
             throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
-        // 재고 차감
+        // 재고 차감 (락 조회로 재고 한 번 더 체크)
         for (OrderItem orderItem : payment.getOrder().getOrderItems()) {
-            orderItem.getProduct().decreaseStock(orderItem.getQuantity());
+            Product product = productRepository.findWithLockById(orderItem.getProduct().getId()).orElseThrow(
+                    () -> new ProductException(ErrorCode.PRODUCT_NOT_FOUND));
+            product.decreaseStock(orderItem.getQuantity());
         }
 
         // 최종 확정

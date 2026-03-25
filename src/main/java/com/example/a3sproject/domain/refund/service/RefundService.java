@@ -47,7 +47,7 @@ public class RefundService {
                 () -> new RefundException(ErrorCode.PAYMENT_NOT_FOUND)
         );
 
-        // 이미 진행된 환불인지 확인
+        // 이미 진행된 환불인지 확인함
         boolean alreadyRefunded = refundRepository.existsByPaymentIdAndRefundStatus(
                 payment.getId(), RefundStatus.COMPLETED);
         if (alreadyRefunded) {
