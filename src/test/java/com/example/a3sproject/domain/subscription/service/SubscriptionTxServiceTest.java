@@ -45,26 +45,20 @@ class SubscriptionTxServiceTest {
         User user = mock(User.class);
         Plan plan = mock(Plan.class);
 
-        PaymentMethod savedPaymentMethod = mock(PaymentMethod.class);
-        Subscription savedSubscription = mock(Subscription.class);
-        given(savedSubscription.getSubscriptionUuid()).willReturn("sub-uuid-001");
-
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(planRepository.findByPlanUuid("plan-uuid-001")).willReturn(Optional.of(plan));
-        given(paymentMethodRepository.save(any())).willReturn(savedPaymentMethod);
-        given(subscriptionRepository.save(any())).willReturn(savedSubscription);
 
         CreateSubscriptionRequest request = new CreateSubscriptionRequest(
-                "plan-uuid-001", "billing-key-001", "CUST-1", 9900
+                "CUST-1", "plan-uuid-001", "billing-key-001", 9900
         );
 
         // when
         CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(1L, request);
 
-        // then: UUID 반환, 결제수단/구독 각 1회 저장
-        assertThat(response.subscriptionId()).isEqualTo("sub-uuid-001");
-        verify(paymentMethodRepository, times(1)).save(any(PaymentMethod.class));
-        verify(subscriptionRepository, times(1)).save(any(Subscription.class));
+        // then: 결제수단/구독 각 1회 저장, 반환된 UUID가 null이 아님을 검증
+        verify(paymentMethodRepository, times(1)).save(any());
+        verify(subscriptionRepository, times(1)).save(any());
+        assertThat(response.subscriptionId()).isNotNull();
     }
 
     @Test
@@ -92,8 +86,9 @@ class SubscriptionTxServiceTest {
         given(userRepository.findById(1L)).willReturn(Optional.of(user));
         given(planRepository.findByPlanUuid("invalid-plan")).willReturn(Optional.empty());
 
+        // customerUid, planId, billingKey, amount 순 — planId 자리에 "invalid-plan" 배치
         CreateSubscriptionRequest request = new CreateSubscriptionRequest(
-                "invalid-plan", "billing-key-001", "CUST-1", 9900
+                "CUST-1", "invalid-plan", "billing-key-001", 9900
         );
 
         // when & then

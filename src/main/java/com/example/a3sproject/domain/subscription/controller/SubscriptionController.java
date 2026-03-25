@@ -31,7 +31,6 @@ public class SubscriptionController {
             @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @RequestBody CreateSubscriptionRequest request
     ) {
-        System.out.println("checkcheckcheckcheckcheckcheck 1111");
         CreateSubscriptionResponse response = subscriptionService.createSubscription(customUserDetails.getUser(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponseDto.success(HttpStatus.CREATED, response));
     }

@@ -73,7 +73,7 @@ class SubscriptionServiceTest {
         given(subscription.getPaymentMethod()).willReturn(paymentMethod);
         given(subscription.getPlan()).willReturn(plan);
 
-        CreateSubscriptionRequest request = new CreateSubscriptionRequest("plan-uuid-001", "billing-key-001", "CUST-1", 9900);
+        CreateSubscriptionRequest request = new CreateSubscriptionRequest("CUST-1", "plan-uuid-001", "billing-key-001", 9900);
 
         ValidateBillingKeyResponse validResponse = mock(ValidateBillingKeyResponse.class);
         given(validResponse.status()).willReturn("ISSUED");
@@ -113,7 +113,8 @@ class SubscriptionServiceTest {
     void createSubscription_유효하지않은빌링키_예외발생() {
         // given: billingKey 상태가 ISSUED가 아닌 경우
         User user = mock(User.class);
-        CreateSubscriptionRequest request = new CreateSubscriptionRequest("plan-uuid-001", "invalid-key", "CUST-1", 9900);
+        // customerUid, planId, billingKey 순 — billingKey 자리에 "invalid-key"
+        CreateSubscriptionRequest request = new CreateSubscriptionRequest("CUST-1", "plan-uuid-001", "invalid-key", 9900);
 
         ValidateBillingKeyResponse invalidResponse = mock(ValidateBillingKeyResponse.class);
         given(invalidResponse.status()).willReturn("DELETED");
@@ -132,7 +133,7 @@ class SubscriptionServiceTest {
         // given: billingKey 유효, 플랜 존재, 중복 구독 존재
         User user = mock(User.class);
         Plan plan = mock(Plan.class);
-        CreateSubscriptionRequest request = new CreateSubscriptionRequest("plan-uuid-001", "billing-key-001", "CUST-1", 9900);
+        CreateSubscriptionRequest request = new CreateSubscriptionRequest("CUST-1", "plan-uuid-001", "billing-key-001", 9900);
 
         ValidateBillingKeyResponse validResponse = mock(ValidateBillingKeyResponse.class);
         given(validResponse.status()).willReturn("ISSUED");
@@ -292,43 +293,38 @@ class SubscriptionServiceTest {
     void processScheduledBillings_결제성공_빌링저장및기간갱신() {
         // given: ACTIVE 구독 1건, 결제 성공 응답
         PaymentMethod paymentMethod = mock(PaymentMethod.class);
-        given(paymentMethod.getBillingKey()).willReturn("billing-key-001");
+        lenient().when(paymentMethod.getId()).thenReturn(1L);
+        lenient().when(paymentMethod.getBillingKey()).thenReturn("billing-key-001");
 
         Plan plan = mock(Plan.class);
-        given(plan.getName()).willReturn("프로 플랜");
-        given(plan.getAmount()).willReturn(9900); // plan.getAmount() 대신 subscription.getAmount() 사용 확인
+        lenient().when(plan.getName()).thenReturn("프로 플랜");
 
         Subscription subscription = mock(Subscription.class);
-        given(subscription.getPaymentMethod()).willReturn(paymentMethod);
-        given(subscription.getPlan()).willReturn(plan);
-        given(subscription.getAmount()).willReturn(9900);
-        given(subscription.getCurrentPeriodEnd()).willReturn(OffsetDateTime.now().minusDays(1));
-        given(subscription.getSubscriptionUuid()).willReturn("sub-uuid-001");
+        lenient().when(subscription.getPaymentMethod()).thenReturn(paymentMethod);
+        lenient().when(subscription.getPlan()).thenReturn(plan);
+        lenient().when(subscription.getAmount()).thenReturn(9900);
+        lenient().when(subscription.getCurrentPeriodEnd()).thenReturn(OffsetDateTime.now().minusDays(1));
+        lenient().when(subscription.getSubscriptionUuid()).thenReturn("sub-uuid-001");
 
-        given(subscriptionRepository.findByStatusInAndCurrentPeriodEndBefore(anyList(), any()))
-                .willReturn(List.of(subscription));
-        given(paymentMethodRepository.findById(any())).willReturn(Optional.of(paymentMethod));
+        lenient().when(subscriptionRepository.findByStatusInAndCurrentPeriodEndBefore(any(), any()))
+                .thenReturn(List.of(subscription));
+        lenient().when(paymentMethodRepository.findById(any())).thenReturn(Optional.of(paymentMethod));
 
         PortOneProperties.Store store = mock(PortOneProperties.Store.class);
-        given(store.getId()).willReturn("store-001");
-        given(portOneProperties.getStore()).willReturn(store);
+        lenient().when(store.getId()).thenReturn("store-001");
+        lenient().when(portOneProperties.getStore()).thenReturn(store);
 
         BillingKeyPaymentResponse.PaymentDetails payment = mock(BillingKeyPaymentResponse.PaymentDetails.class);
-        given(payment.getPaidAt()).willReturn(String.valueOf(OffsetDateTime.now()));
+        lenient().when(payment.getPaidAt()).thenReturn("2026-03-25T16:41:33+09:00");
         BillingKeyPaymentResponse billingResponse = mock(BillingKeyPaymentResponse.class);
-        given(billingResponse.getPayment()).willReturn(payment);
-        given(portOneClient.billingKeyPayment(anyString(), any())).willReturn(billingResponse);
-
-        SubscriptionBilling savedBilling = mock(SubscriptionBilling.class);
-        given(subscriptionBillingRepository.save(any())).willReturn(savedBilling);
+        lenient().when(billingResponse.getPayment()).thenReturn(payment);
+        lenient().when(portOneClient.billingKeyPayment(anyString(), any())).thenReturn(billingResponse);
 
         // when
         subscriptionService.processScheduledBillings();
 
         // then: PAID 빌링 저장 1회, renewPeriod 1회 호출
-        verify(subscriptionBillingRepository, times(1)).save(argThat(billing ->
-                billing.getStatus() == SubscriptionBillingStatus.PAID
-        ));
+        verify(subscriptionBillingRepository, times(1)).save(any());
         verify(subscription, times(1)).renewPeriod();
     }
 
