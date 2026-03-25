@@ -52,23 +52,28 @@ public class SubscriptionService {
     @Transactional
     public CreateSubscriptionResponse createSubscription(User user, CreateSubscriptionRequest request) {
         log.info("====================== billingdey 요청 ====================" + request);
+        System.out.println("checkcheckcheckcheckcheckcheck 2222");
         // 1. PortOne API로 billingKey 유효성 검증
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
 
         log.info("====================== validateBillingKeyResponse {} ================", validateBillingKeyResponse);
+        System.out.println("checkcheckcheckcheckcheckcheck 3333");
         // 검증 추가
         if (!"ISSUED".equals(validateBillingKeyResponse.status())) {
             throw new SubscriptionException(ErrorCode.INVALID_BILLING_KEY);
         }
+        System.out.println("checkcheckcheckcheckcheckcheck 4444");
 
         Plan plan = planRepository.findByPlanUuid(request.planId()).orElseThrow(
                 () -> new SubscriptionException(ErrorCode.PLAN_NOT_FOUND)
         );
+        System.out.println("checkcheckcheckcheckcheckcheck 5555");
 
         // 중복 검증
         if (subscriptionRepository.existsByUserAndPlanAndStatus(user, plan, SubscriptionStatus.ACTIVE)) {
             throw new SubscriptionException(ErrorCode.SUBSCRIPTION_ALREADY_EXISTS);
         }
+        System.out.println("checkcheckcheckcheckcheckcheck 6666");
 
         CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(user.getId(), request);
 
@@ -77,9 +82,10 @@ public class SubscriptionService {
                 OffsetDateTime.now(),
                 OffsetDateTime.now().plusMonths(1)
         );
+        System.out.println("checkcheckcheckcheckcheckcheck 7777");
         createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
-        
 
+        System.out.println("checkcheckcheckcheckcheckcheck 8888");
         return response;
     }
 
