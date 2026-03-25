@@ -232,6 +232,12 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
+            // 임시 로그 추가
+            log.info("🔥 response: {}", response);
+            log.info("🔥 payment: {}", response != null ? response.getPayment() : "null");
+            log.info("🔥 paidAt: {}", (response != null && response.getPayment() != null)
+                    ? response.getPayment().getPaidAt() : "null");
+
             // paidAt이 null이 아니면 성공으로 판단
             if (response == null || response.getPayment() == null
                     || response.getPayment().getPaidAt() == null) {
