@@ -49,7 +49,7 @@ public class SubscriptionService {
     private final PortOneProperties portOneProperties;
     private final PlanRepository planRepository;
 
-
+    @Transactional
     public CreateSubscriptionResponse createSubscription(User user, CreateSubscriptionRequest request) {
         // 1. PortOne API로 billingKey 유효성 검증
         ValidateBillingKeyResponse validateBillingKeyResponse = portOneClient.getBillingKey(request.billingKey());
@@ -70,12 +70,12 @@ public class SubscriptionService {
 
         CreateSubscriptionResponse response = subscriptionTxService.saveSubscription(user.getId(), request);
 
-//        // 즉시 결제
-//        CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
-//                OffsetDateTime.now(),
-//                OffsetDateTime.now().plusMonths(1)
-//        );
-//        createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
+        // 즉시 결제
+        CreateBillingRequest firstBillingRequest = new CreateBillingRequest(
+                OffsetDateTime.now(),
+                OffsetDateTime.now().plusMonths(1)
+        );
+        createBilling(user.getId(), response.subscriptionId(), firstBillingRequest);
         
 
         return response;
@@ -161,11 +161,12 @@ public class SubscriptionService {
             );
 
             try {
-                // 5. PortOne API 호출
                 BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, request);
 
-                // 핵심: 명세서에 따른 status 필드 검증
-                if (response != null && response.getPayment() != null) {
+                // 수정: paidAt이 있으면 성공
+                if (response != null && response.getPayment() != null
+                        && response.getPayment().getPaidAt() != null) {
+
                     SubscriptionBilling billing = new SubscriptionBilling(
                             subscription,
                             subscription.getAmount(),
@@ -176,9 +177,8 @@ public class SubscriptionService {
                             null
                     );
                     subscriptionBillingRepository.save(billing);
-
-                    // 6-2. 구독 기간 연장 및 상태 ACTIVE로 변경
                     subscription.renewPeriod();
+
                 } else {
                     throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
                 }
@@ -205,6 +205,7 @@ public class SubscriptionService {
         }
     }
 
+    @Transactional
     // 수동 즉시 청구
     public CreateBillingResponse createBilling(Long userId, String subscriptionId, CreateBillingRequest request) {
         // 본인 구독인지 확인
@@ -231,8 +232,9 @@ public class SubscriptionService {
             // 결제 시도
             BillingKeyPaymentResponse response = portOneClient.billingKeyPayment(paymentId, billingKeyPaymentRequest);
 
-            // paidAt 체크 대신 status가 PAID인지 명확히 확인
-            if (response == null || response.getPayment() == null) {
+            // paidAt이 null이 아니면 성공으로 판단
+            if (response == null || response.getPayment() == null
+                    || response.getPayment().getPaidAt() == null) {
                 throw new SubscriptionException(ErrorCode.PAYMENT_PORTONE_ERROR);
             }
             // 성공 시 구독 청구에 저장
