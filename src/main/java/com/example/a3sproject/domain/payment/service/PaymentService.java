@@ -20,6 +20,7 @@ import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.payment.repository.PaymentRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.common.AppConstants;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
@@ -116,7 +117,7 @@ public class PaymentService {
                     })
                     .orElseGet(() -> new Payment(
                             order, 0,
-                            GenerateCodeUuid.generateCodeUuid("PMN"),
+                            GenerateCodeUuid.generateCodeUuid(AppConstants.Payment.NUMBER_PREFIX),
                             pointsToUse
                     ));
 
@@ -155,7 +156,7 @@ public class PaymentService {
                 .orElseGet(() -> new Payment(
                         order,
                         finalPaidAmount,
-                        GenerateCodeUuid.generateCodeUuid("PMN"),
+                        GenerateCodeUuid.generateCodeUuid(AppConstants.Payment.NUMBER_PREFIX),
                         pointsToUse
                 ));
 

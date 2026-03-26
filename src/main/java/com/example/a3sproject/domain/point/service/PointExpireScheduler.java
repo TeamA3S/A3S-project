@@ -3,6 +3,7 @@ package com.example.a3sproject.domain.point.service;
 
 import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.domain.point.repository.PointRepository;
+import com.example.a3sproject.global.common.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +22,9 @@ public class PointExpireScheduler {
     private final PointRepository pointRepository;
     private final PointExpireBatchService pointExpireBatchService;
 
-    private static final int CHUNK_SIZE = 10;
-    private static final int MAX_RECORDS = 100;
-    private static final long CHUNK_DELAY_MS = 1000L;
+    private static final int CHUNK_SIZE = AppConstants.Point.BATCH_CHUNK_SIZE;
+    private static final int MAX_RECORDS = AppConstants.Point.BATCH_MAX_RECORDS;
+    private static final long CHUNK_DELAY_MS = AppConstants.Point.BATCH_DELAY_MS;
 
     @Scheduled(cron = "0 0 0 * * *")
     public void expirePoints() {

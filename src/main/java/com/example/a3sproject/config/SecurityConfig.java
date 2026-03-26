@@ -1,5 +1,6 @@
 package com.example.a3sproject.config;
 
+import com.example.a3sproject.global.common.AppConstants;
 import com.example.a3sproject.global.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -130,7 +131,7 @@ public class SecurityConfig {
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
-        config.setMaxAge(3600L);
+        config.setMaxAge(AppConstants.Security.CORS_MAX_AGE);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
