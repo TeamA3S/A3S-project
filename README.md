@@ -272,6 +272,7 @@ docker run -p 8080:8080 \
 - **RTR (Refresh Token Rotation)**: 재발급 시 기존 토큰 즉시 무효화
 - **IDOR 방지**: 모든 데이터 조회 시 userId 소유권 검증
 - **비관적 락**: 포인트 차감 시 동시성 보장
+- **낙관적 락**: 결제 시점 재고 조회 시 충돌 방지
 - **웹훅 멱등성**: webhookUuid 기반 중복 처리 방지
 
 ---
@@ -336,6 +337,7 @@ AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 | `/pages/plans` | 구독 플랜 목록 |
 | `/pages/subscribe` | 구독 신청 (빌링키 발급) |
 | `/pages/subscriptions` | 구독 관리 (청구, 해지) |
+| `/pages/mypage` | 내 정보 조회 (포인트, 주문내역, 멤버십 등) |
 
 ---
 
