@@ -62,11 +62,10 @@ class MembershipServiceTest {
         User user = createUser(1L, 0, 0, MembershipGrade.NORMAL);
         Membership membership = createMembership(user, MembershipGrade.NORMAL);
 
-        given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
         given(membershipRepository.findByUser(user)).willReturn(Optional.of(membership));
 
         // when
-        MyMembershipResponseDto result = membershipService.getMyMembership("test@test.com");
+        MyMembershipResponseDto result = membershipService.getMyMembership(user);
 
         // then: NORMAL 등급, 총 결제금액 0원, 적립률 1% 반환
         assertThat(result.getGrade()).isEqualTo(MembershipGrade.NORMAL);
@@ -81,11 +80,10 @@ class MembershipServiceTest {
         User user = createUser(1L, 0, 300000, MembershipGrade.VIP);
         Membership membership = createMembership(user, MembershipGrade.VIP);
 
-        given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
         given(membershipRepository.findByUser(user)).willReturn(Optional.of(membership));
 
         // when
-        MyMembershipResponseDto result = membershipService.getMyMembership("test@test.com");
+        MyMembershipResponseDto result = membershipService.getMyMembership(user);
 
         // then: VIP 등급, 총 결제금액 300,000원, 적립률 5% 반환
         assertThat(result.getGrade()).isEqualTo(MembershipGrade.VIP);
@@ -100,11 +98,10 @@ class MembershipServiceTest {
         User user = createUser(1L, 0, 500000, MembershipGrade.VVIP);
         Membership membership = createMembership(user, MembershipGrade.VVIP);
 
-        given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
         given(membershipRepository.findByUser(user)).willReturn(Optional.of(membership));
 
         // when
-        MyMembershipResponseDto result = membershipService.getMyMembership("test@test.com");
+        MyMembershipResponseDto result = membershipService.getMyMembership(user);
 
         // then: VVIP 등급, 총 결제금액 500,000원, 적립률 10% 반환
         assertThat(result.getGrade()).isEqualTo(MembershipGrade.VVIP);
@@ -113,29 +110,15 @@ class MembershipServiceTest {
     }
 
     @Test
-    @DisplayName("존재하지 않는 이메일로 조회하면 USER_NOT_FOUND 예외가 발생한다")
-    void getMyMembership_존재하지않는이메일_USER_NOT_FOUND() {
-        // given: DB에 없는 이메일
-        given(userRepository.findByEmail("nobody@test.com")).willReturn(Optional.empty());
-
-        // when & then
-        assertThatThrownBy(() -> membershipService.getMyMembership("nobody@test.com"))
-                .isInstanceOf(UserException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.USER_NOT_FOUND);
-    }
-
-    @Test
     @DisplayName("유저는 존재하지만 멤버십이 없으면 USER_NOT_FOUND 예외가 발생한다")
     void getMyMembership_멤버십없음_USER_NOT_FOUND() {
         // given: 유저는 존재하지만 멤버십 초기화가 누락된 상황
         User user = createUser(1L, 0, 0, MembershipGrade.NORMAL);
 
-        given(userRepository.findByEmail("test@test.com")).willReturn(Optional.of(user));
         given(membershipRepository.findByUser(user)).willReturn(Optional.empty());
 
         // when & then: 멤버십 조회 실패 시 USER_NOT_FOUND 예외 발생
-        assertThatThrownBy(() -> membershipService.getMyMembership("test@test.com"))
+        assertThatThrownBy(() -> membershipService.getMyMembership(user))
                 .isInstanceOf(UserException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.USER_NOT_FOUND);

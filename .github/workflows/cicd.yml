@@ -120,9 +120,10 @@ jobs:
             --instance-ids $INSTANCE_ID \
             --document-name "AWS-RunShellScript" \
             --parameters commands="[
-              \"docker pull ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\",
               \"docker stop app || true\",
               \"docker rm app || true\",
+              \"docker image prune -af\",
+              \"docker pull ${{ secrets.DOCKERHUB_USERNAME }}/a3s-project:latest\",
               \"docker run -d --name app -p 8080:8080 --restart unless-stopped \
                 -e SPRING_PROFILES_ACTIVE=prod \
                 -e DB_URL=$DB_URL \

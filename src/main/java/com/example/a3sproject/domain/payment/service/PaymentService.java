@@ -6,6 +6,7 @@ import com.example.a3sproject.domain.order.entity.Order;
 import com.example.a3sproject.domain.order.entity.OrderItem;
 import com.example.a3sproject.domain.order.enums.OrderStatus;
 import com.example.a3sproject.domain.order.repository.OrderRepository;
+import com.example.a3sproject.domain.payment.dto.PaymentPrepareResult;
 import com.example.a3sproject.domain.payment.dto.PaymentProcessResult;
 import com.example.a3sproject.domain.payment.dto.request.PaymentTryRequest;
 import com.example.a3sproject.domain.payment.dto.response.PaymentConfirmResponse;
@@ -19,10 +20,12 @@ import com.example.a3sproject.domain.portone.PortOneClient;
 import com.example.a3sproject.domain.payment.repository.PaymentRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.common.AppConstants;
 import com.example.a3sproject.global.common.GenerateCodeUuid;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PaymentException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +37,9 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final PortOneClient portOneClient;
     private final PointService pointService;
-    private final MembershipRepository membershipRepository;
-    private final UserRepository userRepository;
     private final PaymentFailureHandler paymentFailureHandler;
+    private final PaymentPreProcessor paymentPreProcessor;
+    private final PaymentConfirmProcessor paymentConfirmProcessor;
 
     // 주문 이름 생성 메서드
     private String buildOrderName(Order order) {
@@ -114,7 +117,7 @@ public class PaymentService {
                     })
                     .orElseGet(() -> new Payment(
                             order, 0,
-                            GenerateCodeUuid.generateCodeUuid("PMN"),
+                            GenerateCodeUuid.generateCodeUuid(AppConstants.Payment.NUMBER_PREFIX),
                             pointsToUse
                     ));
 
@@ -153,7 +156,7 @@ public class PaymentService {
                 .orElseGet(() -> new Payment(
                         order,
                         finalPaidAmount,
-                        GenerateCodeUuid.generateCodeUuid("PMN"),
+                        GenerateCodeUuid.generateCodeUuid(AppConstants.Payment.NUMBER_PREFIX),
                         pointsToUse
                 ));
 
@@ -168,88 +171,48 @@ public class PaymentService {
                 String.valueOf(savedPayment.getPaidStatus())
         );
     }
-
-    // Confirm  - portOneId로 조회
-    @Transactional
+    // PaymentService - 트랜잭션 없음! (조율만 담당)
     public PaymentConfirmResponse confirmPayment(String portOneId, Long userId) {
-        PaymentProcessResult result = null;
-        Payment payment = null;
+        PaymentPrepareResult prepareResult = null;
+        boolean portOneConfirmed = false;
         try {
-            payment = paymentRepository.findByPortOneId(portOneId).orElseThrow(
-                    () -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND)
-            );
-            if (userId != null) { // 소유권 검증, 웹훅은 검증 불필요
-                if (!payment.getOrder().getUser().getId().equals(userId)) {
-                    throw new PaymentException(ErrorCode.USER_FORBIDDEN);
-                }
-            } else {
-                userId = payment.getOrder().getUser().getId();
-            }
+            // 1단계: 사전 검증 결과 저장
+            prepareResult = paymentPreProcessor.validateAndPrepare(portOneId, userId);
 
-            result = processPaymentConfirm(payment, payment.getOrder(), portOneId, payment.getPointsToUse(), userId); // 핵심 로직 호출
-            return new PaymentConfirmResponse(payment.getOrder().getOrderNumber(), "결제가 완료되었습니다.");
+            // 2단계: 외부 API 호출 (트랜잭션 밖!)
+            PortOnePaymentResponse portOneResponse = portOneClient.getPayment(portOneId);
+            portOneConfirmed = true;
+
+            // 3단계: 결제 확정
+
+            return paymentConfirmProcessor.confirm(prepareResult.payment(), portOneResponse);
+
         } catch (PaymentException e) {
-            // ✅ PAYMENT_AMOUNT_MISMATCH만 보상 트랜잭션 실행
+            // PAYMENT_AMOUNT_MISMATCH만 보상 트랜잭션 실행
             if (e.getErrorCode() == ErrorCode.PAYMENT_AMOUNT_MISMATCH) {
-                paymentFailureHandler.handlePaymentFailure(payment, result, userId);
+                paymentFailureHandler.handlePaymentFailure(prepareResult, portOneId, portOneConfirmed);
+            }
+            if (prepareResult != null && prepareResult.pointUsed()) {
+                // 포인트 복구! (트랜잭션 A는 이미 커밋됐으므로 직접 복구)
+                pointService.restorePoint(
+                        prepareResult.userId(),
+                        prepareResult.payment().getOrder().getId(),
+                        prepareResult.payment().getPointsToUse()
+                );
             }
             // 나머지 비즈니스 예외는 보상 트랜잭션 없이 그냥 던지기
             throw e;
         } catch (Exception e) {
-            // 보상 트랜잭션!
-            paymentFailureHandler.handlePaymentFailure(payment, result, userId);
+            if (prepareResult != null && prepareResult.pointUsed()) {
+                // 포인트 복구! (트랜잭션 A는 이미 커밋됐으므로 직접 복구)
+                pointService.restorePoint(
+                        prepareResult.userId(),
+                        prepareResult.payment().getOrder().getId(),
+                        prepareResult.payment().getPointsToUse()
+                );
+            }
+            paymentFailureHandler.handlePaymentFailure(prepareResult, portOneId, portOneConfirmed);
             throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
         }
-    }
-
-    // 결제 확정 메서드 - 공유 핵심 로직
-    private PaymentProcessResult processPaymentConfirm(Payment payment, Order order, String portOneId, int pointsToUse, long userId) {
-        boolean portOneConfirmed = false;
-        PortOnePaymentResponse portOnePaymentResponse = null;
-        // 1. 포인트 차감
-        if (pointsToUse > 0) {
-            pointService.validateAndUse(userId, order.getId(), pointsToUse);
-        }
-        // 2. 중복 요청 검증
-        if (paymentRepository.existsByPortOneIdAndPaidStatus(portOneId, PaidStatus.SUCCESS)) {
-            throw new PaymentException(ErrorCode.DUPLICATE_PAYMENT_REQUEST);
-        }
-        if(payment.getPaidAmount() !=0) {
-            // 3. PortOne 조회 API 호출
-            portOnePaymentResponse = portOneClient.getPayment(portOneId);
-            // 4. PortOne 결제 상태 검증
-            if (PortOnePayStatus.PAID != portOnePaymentResponse.status()) {
-                throw new PaymentException(ErrorCode.PAYMENT_PORTONE_ERROR);
-            }
-        }
-        // 5. 금액 검증
-        if (portOnePaymentResponse.amount().total() != payment.getPaidAmount()) {
-            throw new PaymentException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
-        } // 클라이언트가 보내온 request.payAmount()는 신뢰할 수 없는 값
-        // 6. 재고 차감
-        for (OrderItem orderItem : order.getOrderItems()) {
-            orderItem.getProduct().decreaseStock(orderItem.getQuantity());
-        }
-
-        portOneConfirmed = true;
-        // 7. 최종 확정
-        payment.confirmPayment(portOnePaymentResponse.paidAt()); // 상태 변경
-        order.updateOrderStatus(OrderStatus.COMPLETED); // 주문 상태 성공으로 변경// PAID에서 COMPLETED로 수정
-        paymentRepository.save(payment);
-        // 8. 유저 총 결제금액 업데이트
-        User user = userRepository.findWithLockById(order.getUser().getId()).orElseThrow(
-                () -> new PaymentException(ErrorCode.USER_NOT_FOUND)
-        );
-        user.updateTotalPaymentAmount(payment.getPaidAmount());
-
-        Membership membership = membershipRepository.findWithLockByUser(user)
-                .orElseThrow(() -> new PaymentException(ErrorCode.PAYMENT_NOT_FOUND));
-        // 9. 포인트 적립
-        int earnedPoint = (int)(payment.getPaidAmount() * membership.getEarnRate());
-        pointService.earnPoint(user.getId(), order.getId(), earnedPoint);
-        // 10. 멤버십 등급 갱신
-        membership.updateGrade(user.getTotalPaymentAmount());
-        // 11. 롤백을 위해 변경 여부 값 반환
-        return new PaymentProcessResult(portOneConfirmed, portOneId);
     }
 }

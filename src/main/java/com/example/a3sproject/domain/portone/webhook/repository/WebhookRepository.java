@@ -11,4 +11,5 @@ public interface WebhookRepository extends JpaRepository<Webhook, Long> {
     boolean existsByWebhookUuidAndStatus(String webhookUuid, WebhookStatus Status);
 
     boolean existsByWebhookUuid(String webhookUuid);
+    Optional<Webhook> findByWebhookUuid(String webhookUuid);
 }

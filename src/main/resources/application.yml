@@ -23,9 +23,9 @@ portone:
 app:
   ui:
     branding:
-      app-name: CommerceHub
+      app-name: A3S_Hub
       tagline: 통합 커머스 플랫폼
-      logo-text: 🏪 CommerceHub
+      logo-text: 🏪 A3S Hub
 
 management:
   endpoints:

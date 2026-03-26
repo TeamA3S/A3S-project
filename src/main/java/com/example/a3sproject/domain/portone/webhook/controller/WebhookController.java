@@ -21,8 +21,10 @@ public class WebhookController {
     public ResponseEntity<Void> handleWebhook(
             @RequestBody String rawBody
     ) {
+        System.out.println("checkcheckcheckcheckcheckcheck 9999");
         try {
             log.info("rawBody: {}", rawBody);
+            System.out.println("checkcheckcheckcheckcheckcheck 10101010");
             webhookService.handleWebhook(rawBody);
         } catch (Exception e) {
             log.error("웹훅 처리 실패 rawBody: {}, error: {}", rawBody, e.getMessage());

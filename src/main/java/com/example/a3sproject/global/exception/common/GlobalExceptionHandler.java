@@ -4,6 +4,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -131,5 +132,16 @@ public class GlobalExceptionHandler {
                         ErrorCode.INTERNAL_SERVER_ERROR.name(),
                         ErrorCode.INTERNAL_SERVER_ERROR.getMessage()
                 ));
+    }
+
+    // 409 - 결제 시점 재고 차감 로직 낙관적 락 적용
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<?> handleOptimisticLock(OptimisticLockingFailureException e) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponseDto.error(
+                        ErrorCode.PRODUCT_STOCK_MISMATCH.name(),
+                        ErrorCode.PRODUCT_STOCK_MISMATCH.getMessage()
+                        ));
     }
 }

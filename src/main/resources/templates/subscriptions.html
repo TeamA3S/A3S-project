@@ -18,7 +18,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">
+                <img th:src="@{/images/a3s-logo-v2.png}" alt="A3S Hub" style="height: 48px;">
+            </a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
                 <li><a href="/pages/shop" class="nav-link">상점</a></li>
@@ -83,10 +85,10 @@
                 <div class="card-header">💰 청구 작업</div>
                 <div class="card-subtitle">구독 청구 관리</div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <strong>ℹ️ 안내:</strong> 실제 운영 환경에서는 스케줄러가 청구를 처리합니다.
-                        이 버튼들로 청구 작업을 시뮬레이션할 수 있습니다.
-                    </div>
+<!--                    <div class="alert alert-info">-->
+<!--                        <strong>ℹ️ 안내:</strong> 실제 운영 환경에서는 스케줄러가 청구를 처리합니다.-->
+<!--                        이 버튼들로 청구 작업을 시뮬레이션할 수 있습니다.-->
+<!--                    </div>-->
 
                     <div class="btn-group">
                         <button class="btn btn-primary" onclick="executeBilling()">
@@ -110,19 +112,19 @@
                 </div>
             </div>
 
-            <div class="card" style="margin-top: 1.5rem;">
-                <div class="card-header">📋 사용 안내</div>
-                <div class="card-body">
-                    <ol style="margin-left: 1.5rem; line-height: 2;">
-                        <li><a href="/pages/subscribe" style="color: var(--primary);">/subscribe</a> 페이지에서 구독 생성 </li>
-                        <li>받은 구독 ID 입력</li>
-                        <li>"구독 정보 불러오기"를 클릭하여 상세 정보 가져오기</li>
-                        <li>"현재 주기 청구 실행"을 사용하여 정기 결제 테스트</li>
-                        <li>"청구 내역 보기"로 모든 과거 청구 확인</li>
-                        <li>"구독 해지"를 사용하여 구독 종료</li>
-                    </ol>
-                </div>
-            </div>
+<!--            <div class="card" style="margin-top: 1.5rem;">-->
+<!--                <div class="card-header">📋 사용 안내</div>-->
+<!--                <div class="card-body">-->
+<!--                    <ol style="margin-left: 1.5rem; line-height: 2;">-->
+<!--                        <li><a href="/pages/subscribe" style="color: var(&#45;&#45;primary);">/subscribe</a> 페이지에서 구독 생성 </li>-->
+<!--                        <li>받은 구독 ID 입력</li>-->
+<!--                        <li>"구독 정보 불러오기"를 클릭하여 상세 정보 가져오기</li>-->
+<!--                        <li>"현재 주기 청구 실행"을 사용하여 정기 결제 테스트</li>-->
+<!--                        <li>"청구 내역 보기"로 모든 과거 청구 확인</li>-->
+<!--                        <li>"구독 해지"를 사용하여 구독 종료</li>-->
+<!--                    </ol>-->
+<!--                </div>-->
+<!--            </div>-->
 
             <div id="billing-history-container" style="margin-top: 1.5rem; display: none;">
                 <div class="card">

@@ -36,9 +36,9 @@ public class UserController {
     public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
             ) {
-        UserProfileResponseDto reponse = userService.getMyProfile(userDetails.getEmail());
+        UserProfileResponseDto response = userService.getMyProfile(userDetails.getEmail());
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponseDto.success(HttpStatus.OK, reponse));
+                .body(ApiResponseDto.success(HttpStatus.OK, response));
     }
 }

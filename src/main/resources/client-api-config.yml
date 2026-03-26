@@ -21,6 +21,7 @@
 
 api:
   base-url: https://a3s.click
+  #  base-url: http://localhost:8080
 
   # API 엔드포인트 및 계약 정의
   endpoints:
@@ -227,7 +228,7 @@ api:
     # 결제 (Payment)
     # ========================================
     create-payment:
-      url:  /api/payments/attempt
+      url: /api/payments/attempt
       method: POST
       description: 결제 시작 요청 (DB에 PENDING 상태로 등록, PortOne SDK 호출 전에 먼저 호출)
       request:
@@ -265,7 +266,7 @@ api:
       method: POST
       description: 결제 확정 (PortOne 결제 검증 및 주문 상태 업데이트)
       pathParams:
-        - name: {paymentId}
+        - name: { paymentId }
           description: 결제 ID
       response:
         body:
@@ -288,7 +289,7 @@ api:
       method: POST
       description: 결제 취소/환불 (PortOne 결제 취소 및 주문 상태 업데이트)
       pathParams:
-        - name: {portOneId}
+        - name: { portOneId }
           description: 결제 ID
       request:
         fields:
@@ -376,7 +377,7 @@ api:
       method: GET
       description: 구독 조회
       pathParams:
-        - name: {subscriptionId}
+        - name: { subscriptionId }
           description: 구독 ID
       response:
         body:
@@ -412,7 +413,7 @@ api:
       method: PATCH
       description: 구독 상태 업데이트 (구독 해지)
       pathParams:
-        - name: {subscriptionId}
+        - name: { subscriptionId }
           description: 구독 ID
       request:
         fields:
@@ -444,7 +445,7 @@ api:
       method: POST
       description: 즉시 결제 (현재 주기 청구 실행)
       pathParams:
-        - name: {subscriptionId}
+        - name: { subscriptionId }
           description: 구독 ID
       request:
         fields:
@@ -484,7 +485,7 @@ api:
       method: GET
       description: 청구 내역 조회
       pathParams:
-        - name: {subscriptionId}
+        - name: { subscriptionId }
           description: 구독 ID
       response:
         body:
@@ -493,3 +494,48 @@ api:
               type: array
               required: true
               description: "청구 내역 배열. 각 요소는 { billingId: string (필수), periodStart: string (필수, ISO 8601), periodEnd: string (필수, ISO 8601), amount: number (필수), status: string (필수, COMPLETED/FAILED/PENDING), paymentId: string (선택), attemptDate: string (선택, ISO 8601), failureMessage: string (선택) } 형태"
+    # ========================================
+    #               자체 추가
+    # ========================================
+    get-my-membership:
+      url: /api/memberships/me
+      method: GET
+      description: 내 멤버십 등급 조회
+      response:
+        body:
+          fields:
+            - name: grade
+              type: string
+              required: true
+              description: 멤버십 등급 (NORMAL, VIP, VVIP)
+            - name: totalPaymentAmount
+              type: number
+              required: true
+              description: 총 결제 금액
+            - name: earnRate
+              type: number
+              required: true
+              description: 포인트 적립률
+
+    get-my-profile:
+      url: /api/users/me
+      method: GET
+      description: 내 프로필 조회
+      response:
+        body:
+          fields:
+            - name: customerUid
+              type: string
+              required: false
+            - name: name
+              type: string
+              required: true
+            - name: email
+              type: string
+              required: true
+            - name: phoneNumber
+              type: string
+              required: true
+            - name: pointBalance
+              type: number
+              required: true

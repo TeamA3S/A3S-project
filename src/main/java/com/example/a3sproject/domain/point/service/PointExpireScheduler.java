@@ -1,17 +1,15 @@
 package com.example.a3sproject.domain.point.service;
 
-import com.example.a3sproject.domain.point.entity.PointTransaction;
+
 import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.domain.point.repository.PointRepository;
-import com.example.a3sproject.domain.user.entity.User;
-import com.example.a3sproject.domain.user.repository.UserRepository;
-import com.example.a3sproject.global.exception.common.ErrorCode;
-import com.example.a3sproject.global.exception.domain.UserException;
+import com.example.a3sproject.global.common.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,58 +20,61 @@ import java.util.List;
 public class PointExpireScheduler {
 
     private final PointRepository pointRepository;
-    private final UserRepository userRepository;
+    private final PointExpireBatchService pointExpireBatchService;
+
+    private static final int CHUNK_SIZE = AppConstants.Point.BATCH_CHUNK_SIZE;
+    private static final int MAX_RECORDS = AppConstants.Point.BATCH_MAX_RECORDS;
+    private static final long CHUNK_DELAY_MS = AppConstants.Point.BATCH_DELAY_MS;
 
     @Scheduled(cron = "0 0 0 * * *")
-    @Transactional
     public void expirePoints() {
         log.info("포인트 소멸 스케줄러 시작");
 
-        // 1. 만료일 도래한 EARN 타입 거래 조회
-        List<PointTransaction> expiredTransactions = pointRepository
-                .findByTypeAndExpiredAtBeforeAndRemainingPointsGreaterThan(
-                        PointTransactionType.EARN,
-                        LocalDateTime.now(),
-                        0
-                );
+        int totalProcessed = 0;
 
-        for (PointTransaction expiredTx : expiredTransactions) {
+        // 한 번 실행의 기준 시각을 고정
+        LocalDateTime cutoff = LocalDateTime.now();
 
-            // 2. 유저 조회 (비관적 락)
-            User user = userRepository.findWithLockById(expiredTx.getUserId())
-                    .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+        while (totalProcessed < MAX_RECORDS) {
+            int remain = MAX_RECORDS - totalProcessed;
+            int currentChunkSize = Math.min(CHUNK_SIZE, remain);
 
-            // 3. 실제 소멸할 포인트 계산
-            // (잔액보다 remainingPoints가 클 수 없음)
-            int expireAmount = Math.min(
-                    expiredTx.getRemainingPoints(),
-                    user.getPointBalance()
+            Pageable pageable = PageRequest.of(0, currentChunkSize);
+
+            // 항상 0페이지의 상위 10건만 조회
+            List<Long> expiredTxIds = pointRepository.findExpiredTransactionIds(
+                    PointTransactionType.EARN,
+                    cutoff,
+                    0,
+                    pageable
             );
+            // 더 이상 처리할 게 없으면 종료
+            if (expiredTxIds.isEmpty()) {
+                log.info("더 이상 소멸할 포인트가 없습니다.");
+                break;
+            }
+            log.info("포인트 소멸 배치 시작 - batchSize: {}, totalProcessedBefore: {}, txIds={}",
+                    expiredTxIds.size(), totalProcessed, expiredTxIds);
 
-            if (expireAmount <= 0) continue;
+            int processedCount = pointExpireBatchService.processChunk(expiredTxIds);
+            totalProcessed += processedCount;
 
-            // 4. User 잔액 차감
-            user.usePoint(expireAmount);
+            log.info("포인트 소멸 배치 완료 - processed: {}, totalProcessedAfter: {}",
+                    processedCount, totalProcessed);
 
-            // 5. 만료된 거래의 remainingPoints 0으로 초기화
-            expiredTx.deductRemaining(expireAmount);
-
-            // 6. EXPIRE 타입 거래 이력 기록
-            PointTransaction expireTx = PointTransaction.of(
-                    expiredTx.getUserId(),
-                    null,                 // 주문과 무관
-                    -expireAmount,               // 소멸이므로 음수
-                    user.getPointBalance(),      // 소멸 후 잔액 스냅샷
-                    PointTransactionType.EXPIRE,
-                    0,              // EXPIRE 타입은 remainingPoints = 0
-                    null                         // EXPIRE 타입은 만료일 없음
-            );
-            pointRepository.save(expireTx);
-
-            log.info("포인트 소멸 처리 완료 - userId: {}, amount: {}",
-                    expiredTx.getUserId(), expireAmount);
+            // 현재 배치가 꽉 차지 않았다면 더 이상 남은 데이터가 거의 없다는 뜻
+            if (expiredTxIds.size() < currentChunkSize) {
+                break;
+            }
+            // 배치 간 간격
+            try {
+                Thread.sleep(CHUNK_DELAY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("포인트 소멸 스케줄러 sleep interrupted");
+                break;
+            }
         }
-
-        log.info("포인트 소멸 스케줄러 완료");
+        log.info("[포인트 소멸 스케줄러] 완료 - 총 처리 건수: {}", totalProcessed);
     }
 }

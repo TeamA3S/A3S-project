@@ -38,6 +38,7 @@ public enum ErrorCode {
     DUPLICATE_PAYMENT_REQUEST(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다."),
     PAYMENT_NOT_SUCCESS(HttpStatus.BAD_REQUEST, "완료되지 않은 결제입니다."),
     INVALID_WEBHOOK_JSON(HttpStatus.FORBIDDEN, "웹훅 JSON을 변환할 수 없습니다."),
+    PAYMENT_AMOUNT_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "0원은 결제할 수 없습니다."),
 
     // Refund
     REFUND_NOT_FOUND(HttpStatus.NOT_FOUND, "환불 정보를 찾을 수 없습니다."),
@@ -47,6 +48,7 @@ public enum ErrorCode {
     // Product
     PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     PRODUCT_OUT_OF_STOCK(HttpStatus.CONFLICT, "상품 재고가 부족합니다."),
+    PRODUCT_STOCK_MISMATCH(HttpStatus.CONFLICT, "재고 처리 중 충돌이 발생했습니다. 다시 시도해주세요."),
 
     // Plan
     PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "플랜을 찾을 수 없습니다."),

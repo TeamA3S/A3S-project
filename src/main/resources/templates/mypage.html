@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
+    <title>마이페이지 - A3S Hub</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/cookie-util.js}"></script>
+    <script th:src="@{/js/app-config.js}"></script>
+    <script th:src="@{/js/api-handler.js}"></script>
+    <script th:src="@{/js/api-validator.js}"></script>
+    <script th:src="@{/js/theme.js}"></script>
+    <script th:src="@{/js/auth-check.js}"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">
+                <img th:src="@{/images/a3s-logo-v2.png}" alt="A3S Hub" style="height: 48px;">
+            </a>
+            <ul class="navbar-nav">
+                <li><a href="/" class="nav-link">홈</a></li>
+                <li><a href="/pages/shop" class="nav-link">상점</a></li>
+                <li><a href="/pages/orders" class="nav-link">주문</a></li>
+                <li><a href="/pages/points" class="nav-link">포인트</a></li>
+                <li><a href="/pages/plans" class="nav-link">플랜</a></li>
+                <li><a href="/pages/subscribe" class="nav-link">구독 신청</a></li>
+                <li><a href="/pages/subscriptions" class="nav-link">구독 관리</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="config-badge-container"></div>
+                <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="content-area">
+            <h1 style="font-size: 2rem; margin-bottom: 2rem;">👤 마이페이지</h1>
+
+            <!-- ========== 프로필 카드 ========== -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">🙍 내 프로필</div>
+                <div class="card-body" id="profile-body">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        프로필 로딩 중...
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 멤버십 카드 ========== -->
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">⭐ 내 멤버십</div>
+                <div class="card-body" id="membership-body">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        멤버십 로딩 중...
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== 완료된 주문 내역 ========== -->
+            <div class="card">
+                <div class="card-header">📦 완료된 주문 내역</div>
+                <div class="card-body" id="orders-body">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        주문 내역 로딩 중...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Panel -->
+        <div class="api-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">📡 현재 엔드포인트</h3>
+                <div id="current-endpoint" class="endpoint-badge">아직 요청 없음</div>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📤 요청</h3>
+                <textarea id="request-body" class="api-textarea"></textarea>
+            </div>
+            <div class="panel-section">
+                <h3 class="panel-title">📥 응답</h3>
+                <pre id="response-output" class="response-box">요청 대기 중...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================================
+        // 멤버십 등급 표시 헬퍼
+        // ========================================================
+        const gradeConfig = {
+            VVIP:   { emoji: '👑', label: 'VVIP',   color: 'var(--warning)',  earnRate: '10%' },
+            VIP:    { emoji: '💎', label: 'VIP',    color: 'var(--secondary)', earnRate: '5%' },
+            NORMAL: { emoji: '🥉', label: 'NORMAL', color: 'var(--text-secondary)', earnRate: '1%' }
+        };
+
+        // ========================================================
+        // 프로필 로드
+        // ========================================================
+        async function loadProfile() {
+            try {
+                const profile = await makeApiRequest('get-my-profile', {});
+
+                document.getElementById('profile-body').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">이름</span>
+                            <span style="font-size: 1.1rem; font-weight: 700;">${profile.name}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">이메일</span>
+                            <span style="font-size: 1.1rem;">${profile.email}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">전화번호</span>
+                            <span style="font-size: 1.1rem;">${profile.phoneNumber || '-'}</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">포인트 잔액</span>
+                            <span style="font-size: 1.4rem; font-weight: 700; color: var(--primary);">
+                                ${(profile.pointBalance ?? 0).toLocaleString()} P
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('profile-body').innerHTML = `
+                    <div class="alert alert-danger">프로필 정보를 불러오지 못했습니다: ${error.message}</div>
+                `;
+            }
+        }
+
+        // ========================================================
+        // 멤버십 로드
+        // ========================================================
+        async function loadMembership() {
+            try {
+                const membership = await makeApiRequest('get-my-membership', {});
+                const cfg = gradeConfig[membership.grade] || gradeConfig.NORMAL;
+
+                // 다음 등급까지 남은 금액 계산
+                let nextGradeInfo = '';
+                if (membership.grade === 'NORMAL') {
+                    const remaining = 300000 - membership.totalPaymentAmount;
+                    nextGradeInfo = remaining > 0
+                        ? `<span style="font-size: 0.85rem; color: var(--text-secondary);">VIP까지 ${remaining.toLocaleString()}원 남음</span>`
+                        : '';
+                } else if (membership.grade === 'VIP') {
+                    const remaining = 500000 - membership.totalPaymentAmount;
+                    nextGradeInfo = remaining > 0
+                        ? `<span style="font-size: 0.85rem; color: var(--text-secondary);">VVIP까지 ${remaining.toLocaleString()}원 남음</span>`
+                        : '';
+                } else {
+                    nextGradeInfo = `<span style="font-size: 0.85rem; color: var(--warning);">최고 등급입니다! 🎉</span>`;
+                }
+
+                document.getElementById('membership-body').innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+                        <div style="font-size: 4rem;">${cfg.emoji}</div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <span style="font-size: 1.8rem; font-weight: 800; color: ${cfg.color};">
+                                ${cfg.label}
+                            </span>
+                            <span style="color: var(--text-secondary);">포인트 적립률: <strong>${cfg.earnRate}</strong></span>
+                            <span style="color: var(--text-secondary);">
+                                총 결제 금액: <strong>${(membership.totalPaymentAmount ?? 0).toLocaleString()}원</strong>
+                            </span>
+                            ${nextGradeInfo}
+                        </div>
+                    </div>
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary);
+                                border-radius: var(--radius-md); font-size: 0.85rem; color: var(--text-secondary);">
+                        💡 등급 기준: NORMAL (300,000원 미만) · VIP (300,000원 이상) · VVIP (500,000원 이상)
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('membership-body').innerHTML = `
+                    <div class="alert alert-danger">멤버십 정보를 불러오지 못했습니다: ${error.message}</div>
+                `;
+            }
+        }
+
+        // ========================================================
+        // 완료된 주문 내역 로드
+        // ========================================================
+        async function loadCompletedOrders() {
+            try {
+                const orders = await makeApiRequest('list-orders', {});
+
+                // COMPLETED(주문 완료) 상태만 필터링
+                const completed = Array.isArray(orders)
+                    ? orders.filter(o => o.status === 'PAID' || o.status === 'COMPLETED')
+                    : [];
+
+                if (completed.length === 0) {
+                    document.getElementById('orders-body').innerHTML = `
+                        <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            완료된 주문 내역이 없습니다.
+                        </p>
+                    `;
+                    return;
+                }
+
+                const rows = completed.map(order => {
+                    const usedPoints  = order.usedPoints  ?? 0;
+                    const earnedPoints = order.earnedPoints ?? 0;
+                    const finalAmount  = order.finalAmount  ?? order.totalAmount;
+                    const createdAt = order.createdAt
+                        ? order.createdAt.substring(0, 10)
+                        : '-';
+
+                    return `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem; font-weight: 600;">${order.orderNumber}</td>
+                            <td style="padding: 0.75rem;">${createdAt}</td>
+                            <td style="padding: 0.75rem; text-align: right;">
+                                ${order.totalAmount.toLocaleString()}원
+                                ${usedPoints > 0
+                                    ? `<div style="font-size: 0.75rem; color: var(--danger);">-${usedPoints.toLocaleString()}P 사용</div>`
+                                    : ''}
+                            </td>
+                            <td style="padding: 0.75rem; text-align: right; font-weight: 700; color: var(--primary);">
+                                ${finalAmount.toLocaleString()}원
+                            </td>
+                            <td style="padding: 0.75rem; text-align: right; color: var(--success);">
+                                ${earnedPoints > 0 ? `+${earnedPoints.toLocaleString()}P` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                document.getElementById('orders-body').innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--border); text-align: left;
+                                           color: var(--text-secondary); font-size: 0.875rem;">
+                                    <th style="padding: 0.75rem;">주문번호</th>
+                                    <th style="padding: 0.75rem;">주문일</th>
+                                    <th style="padding: 0.75rem; text-align: right;">주문금액</th>
+                                    <th style="padding: 0.75rem; text-align: right;">실결제금액</th>
+                                    <th style="padding: 0.75rem; text-align: right;">적립포인트</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('orders-body').innerHTML = `
+                    <div class="alert alert-danger">주문 내역을 불러오지 못했습니다: ${error.message}</div>
+                `;
+            }
+        }
+
+        // ========================================================
+        // 페이지 초기화 — 세 API를 병렬로 호출
+        // ========================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await Promise.allSettled([
+                loadProfile(),
+                loadMembership(),
+                loadCompletedOrders()
+            ]);
+        });
+    </script>
+</body>
+</html>

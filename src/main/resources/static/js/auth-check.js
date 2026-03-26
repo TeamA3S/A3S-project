@@ -40,10 +40,17 @@ function displayUserInfo() {
         const userInfo = document.createElement('div');
         userInfo.style.cssText = 'display: flex; align-items: center; gap: 1rem; margin-right: 1rem;';
         userInfo.innerHTML = `
-            <span style="color: var(--text-secondary); font-size: 0.9rem;">
+            <a href="/pages/mypage"
+               style="color: var(--text-secondary); font-size: 0.9rem; text-decoration: none;
+                      display: flex; align-items: center; gap: 0.4rem;
+                      padding: 0.4rem 0.75rem; border-radius: var(--radius-md);
+                      transition: background 0.2s;"
+               onmouseover="this.style.background='var(--bg-tertiary)'"
+               onmouseout="this.style.background='transparent'">
                 👤 ${email}
-            </span>
-            <button onclick="handleLogout()" class="btn btn-outline" style="padding: 0.4rem 1rem; font-size: 0.875rem;">
+            </a>
+            <button onclick="handleLogout()" class="btn btn-outline"
+                    style="padding: 0.4rem 1rem; font-size: 0.875rem;">
                 로그아웃
             </button>
         `;

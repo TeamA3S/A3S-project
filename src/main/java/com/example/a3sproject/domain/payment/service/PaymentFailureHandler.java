@@ -2,6 +2,7 @@ package com.example.a3sproject.domain.payment.service;
 
 
 import com.example.a3sproject.config.PortOneProperties;
+import com.example.a3sproject.domain.payment.dto.PaymentPrepareResult;
 import com.example.a3sproject.domain.payment.dto.PaymentProcessResult;
 import com.example.a3sproject.domain.payment.entity.Payment;
 import com.example.a3sproject.domain.portone.PortOneClient;
@@ -19,18 +20,18 @@ public class PaymentFailureHandler {
 
     // catch 로직 통합!
     public void handlePaymentFailure(
-            Payment payment,
-            PaymentProcessResult result,
-            Long userId
+            PaymentPrepareResult prepareResult,
+            String portOneId,
+            boolean portOneConfirmed
     ) {
-        if (result != null && result.portOneConfirmed()) {
+        if (portOneId != null && portOneConfirmed) {
             portOneClient.cancelPayment(
-                    result.portOneId(),
+                    portOneId,
                     new PortOneCancelPaymentRequest("내부 오류로 인한 자동 취소", portOneProperties.getStore().getId())
             );
         }
-        if (payment != null) {
-            paymentRollback.failPayment(payment); // REQUIRES_NEW로 별도 커밋
+        if (prepareResult.payment() != null) {
+            paymentRollback.failPayment(prepareResult.payment()); // REQUIRES_NEW로 별도 커밋
         }
     }
 }
