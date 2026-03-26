@@ -42,6 +42,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private ProductCategory productCategory;
 
+    @Version
+    private Long version;
+
     @Builder
     public Product(String name, int price, int stock, String description, ProductStatus productStatus, ProductCategory productCategory) {
         this.name = name;

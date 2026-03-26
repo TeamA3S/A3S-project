@@ -99,4 +99,9 @@ public class User extends BaseEntity {
     public void restorePoint(int amount) {
         this.pointBalance += amount;
     }
+
+    // 기존 usePoint는 잔액 검증이 있어 그대로 두고, 강제 차감 메서드 추가
+    public void forceWithdrawPoint(int amount) {
+        this.pointBalance -= amount; // 잔액 검증 없이 무조건 차감 (마이너스 허용)
+    }
 }

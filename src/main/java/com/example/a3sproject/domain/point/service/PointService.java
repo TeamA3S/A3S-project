@@ -143,7 +143,7 @@ public class PointService {
                 .orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
 
         // 적립된 포인트 차감
-        user.usePoint(amount);
+        user.forceWithdrawPoint(amount);
 
         // 포인트 거래 이력 기록
         PointTransaction tx = PointTransaction.of(
