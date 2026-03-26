@@ -18,7 +18,9 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">
+                <img th:src="@{/images/a3s-logo.png}" alt="A3S Hub" style="height: 48px;">
+            </a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link">홈</a></li>
                 <li><a href="/pages/shop" class="nav-link active">상점</a></li>
@@ -39,19 +41,19 @@
         <div class="content-area">
             <h1 style="font-size: 2rem; margin-bottom: 2rem;">🛒 Product Shop</h1>
 
-            <!-- API 구현 상태 안내 -->
-            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">
-                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>
-                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">
-                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:
-                </p>
-                <ul id="api-list-shop" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">
-                    <!-- API 목록이 동적으로 생성됩니다 -->
-                </ul>
-                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary);">
-                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.
-                </p>
-            </div>
+<!--            &lt;!&ndash; API 구현 상태 안내 &ndash;&gt;-->
+<!--            <div class="alert alert-warning" style="margin-bottom: 1.5rem;">-->
+<!--                <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem;">⚠️ 백엔드 API 구현 필요</h4>-->
+<!--                <p style="margin: 0; font-size: 0.875rem; line-height: 1.6;">-->
+<!--                    이 페이지는 다음 API들이 구현되어야 정상 작동합니다:-->
+<!--                </p>-->
+<!--                <ul id="api-list-shop" style="margin: 0.5rem 0 0 1.5rem; font-size: 0.875rem; line-height: 1.8;">-->
+<!--                    &lt;!&ndash; API 목록이 동적으로 생성됩니다 &ndash;&gt;-->
+<!--                </ul>-->
+<!--                <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: var(&#45;&#45;text-secondary);">-->
+<!--                    💡 API가 구현되지 않으면 오류 메시지가 표시되며, 우측 API 패널에서 자세한 정보를 확인할 수 있습니다.-->
+<!--                </p>-->
+<!--            </div>-->
 
             <div class="card-grid" id="product-list">
                 <!-- Products will be rendered here -->

@@ -17,7 +17,9 @@
     <!-- Navigation Bar -->
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="/" class="navbar-brand">🏪 CommerceHub</a>
+            <a href="/" class="navbar-brand">
+                <img th:src="@{/images/a3s-logo.png}" alt="A3S Hub" style="height: 48px;">
+            </a>
             <ul class="navbar-nav">
                 <li><a href="/" class="nav-link active">홈</a></li>
                 <li><a href="/pages/shop" class="nav-link">상점</a></li>
@@ -37,17 +39,17 @@
     <div class="main-container">
         <div class="content-area">
             <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">
-                🛍️ Commerce Payment & Subscription Demo
+                🛍️ A3S 한강물 스토어
             </h1>
             <p style="font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem;">
-                부트캠프용 결제/구독 UI 템플릿 - PortOne 연동 데모
+                한강의 다양한 맛을 느껴보세요!!
             </p>
 
-            <div class="alert alert-info">
-                <strong>ℹ️ 프로젝트 안내</strong><br>
-                이 프로젝트는 <strong>UI 템플릿</strong>입니다. 비즈니스 로직 API는 구현되어 있지 않으며,
-                수강생이 직접 백엔드 API를 구현하고 <code>application.yml</code>의 엔드포인트 설정을 변경하여 연동합니다.
-            </div>
+<!--            <div class="alert alert-info">-->
+<!--                <strong>ℹ️ 프로젝트 안내</strong><br>-->
+<!--                이 프로젝트는 <strong>UI 템플릿</strong>입니다. 비즈니스 로직 API는 구현되어 있지 않으며,-->
+<!--                수강생이 직접 백엔드 API를 구현하고 <code>application.yml</code>의 엔드포인트 설정을 변경하여 연동합니다.-->
+<!--            </div>-->
 
             <div class="card-grid">
                 <!-- Shop Card -->
@@ -134,14 +136,14 @@
                 </div>
             </div>
 
-            <div style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: var(--radius-lg);">
-                <h2 style="margin-bottom: 1rem;">🚀 시작하기</h2>
-                <ol style="margin-left: 1.5rem; line-height: 2;">
-                    <li><strong>API 구현:</strong> 백엔드 API를 구현하고 <code>application.yml</code>의 <code>app.demo-api.base-url</code>을 수정하세요.</li>
-                    <li><strong>엔드포인트 연결:</strong> 각 엔드포인트 경로를 실제 구현한 경로로 변경하세요.</li>
-                    <li><strong>테스트:</strong> 각 페이지에서 버튼을 클릭하여 API 호출을 테스트하세요.</li>
-                </ol>
-            </div>
+<!--            <div style="margin-top: 3rem; padding: 2rem; background: var(&#45;&#45;bg-secondary); border-radius: var(&#45;&#45;radius-lg);">-->
+<!--                <h2 style="margin-bottom: 1rem;">🚀 시작하기</h2>-->
+<!--                <ol style="margin-left: 1.5rem; line-height: 2;">-->
+<!--                    <strong>API 구현:</strong> 백엔드 API를 구현하고 <code>application.yml</code>의 <code>app.demo-api.base-url</code>을 수정하세요.</li>-->
+<!--                    <li><strong>엔드포인트 연결:</strong> 각 엔드포인트 경로를 실제 구현한 경로로 변경하세요.</li>-->
+<!--                    <li><strong>테스트:</strong> 각 페이지에서 버튼을 클릭하여 API 호출을 테스트하세요.</li>-->
+<!--                </ol>-->
+<!--            </div>-->
         </div>
 
         <!-- API Panel -->
