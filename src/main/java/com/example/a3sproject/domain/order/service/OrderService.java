@@ -17,6 +17,7 @@ import com.example.a3sproject.domain.product.enums.ProductStatus;
 import com.example.a3sproject.domain.product.repository.ProductRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.common.AppConstants;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.OrderException;
 import com.example.a3sproject.global.exception.domain.ProductException;
@@ -149,8 +150,8 @@ public class OrderService {
 
     // 주문번호 발급 (UUID)
     private String generateOrderNumber() {
-        return "ODN-" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
-                + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+        return AppConstants.Order.NUMBER_PREFIX + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
+                + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, AppConstants.Order.NUMBER_RANDOM_LENGTH).toUpperCase();
     }
 
     // 주문 목록 조회

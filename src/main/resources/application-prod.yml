@@ -18,7 +18,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
 
 jwt:
@@ -37,5 +37,5 @@ portone:
 
 logging:
   level:
-    com.example.a3sproject: debug
-    org.springframework.security: debug
+    com.example.a3sproject: info
+    org.springframework.security: info

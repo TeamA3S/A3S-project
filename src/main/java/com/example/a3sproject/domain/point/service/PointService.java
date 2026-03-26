@@ -6,6 +6,7 @@ import com.example.a3sproject.domain.point.enums.PointTransactionType;
 import com.example.a3sproject.domain.point.repository.PointRepository;
 import com.example.a3sproject.domain.user.entity.User;
 import com.example.a3sproject.domain.user.repository.UserRepository;
+import com.example.a3sproject.global.common.AppConstants;
 import com.example.a3sproject.global.exception.common.ErrorCode;
 import com.example.a3sproject.global.exception.domain.PointException;
 import com.example.a3sproject.global.exception.domain.UserException;
@@ -88,7 +89,7 @@ public class PointService {
                 user.getPointBalance(),          // 적립 후 잔액 스냅샷
                 PointTransactionType.EARN,
                 amount,                          // remainingPoints = 적립액 전체
-                LocalDateTime.now().plusYears(1) // 만료일 = 적립일로부터 1년
+                LocalDateTime.now().plusYears(AppConstants.Point.EXPIRATION_YEARS) // 만료일 = 적립일로부터 1년
         );
         pointRepository.save(tx);
     }
