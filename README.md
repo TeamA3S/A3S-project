@@ -1,4 +1,12 @@
-# 🏪 A3S Hub - 결제/구독 플랫폼
+![java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring](https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![mySQL](https://img.shields.io/badge/MySQL-00000F?style=for-the-badge&logo=mysql&logoColor=white)
+![gradle](https://img.shields.io/badge/Gradle-02303A.svg?style=for-the-badge&logo=Gradle&logoColor=white)
+![aws](https://img.shields.io/badge/Amazon_AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
+![DOCKER](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+
+
+# <img width="55" height="25" alt="image" src="src/main/resources/static/images/a3s-logo-v2.png" /> A3S Hub - 결제/구독 플랫폼 
 
 > Spring Boot 기반 커머스 결제 & 구독 백엔드 프로젝트  
 > PortOne(포트원) 연동 | JWT 인증 | 정기결제 구독 관리
